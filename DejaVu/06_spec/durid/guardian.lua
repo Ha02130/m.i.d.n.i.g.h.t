@@ -127,6 +127,10 @@ do
     -- 无限堆叠，除了保留狂暴恢复德怒气外，全部打铁鬃。
     local guardian_ironfur_logic = Config("guardian_ironfur_logic")
 
+    -- x:65 y:12
+    -- 怒气上限
+    local guardian_rage_limit = Config("guardian_rage_limit")
+
     insert(addonTable.Panel.Rows, {
         type = "slider",
         key = "guardian_aoe_enemy_count",
@@ -252,6 +256,18 @@ do
         bind_config = guardian_ironfur_logic,
     })
 
+    insert(addonTable.Panel.Rows, {
+        type = "slider",
+        key = "guardian_rage_limit",
+        name = "怒气上限",
+        tooltip = "当前的怒气上限, 这点将影响Terminal的计算",
+        min_value = 100,
+        max_value = 140,
+        step = 5,
+        default_value = 120,
+        bind_config = guardian_rage_limit,
+    })
+
     local function InitializeGuardianSettingCell()
         local guardian_aoe_enemy_count_cell = Cell:New(55, 12)
         local guardian_opener_time_cell = Cell:New(56, 12)
@@ -263,6 +279,7 @@ do
         local guardian_interrupt_logic_cell = Cell:New(62, 12)
         local guardian_incarnation_logic_cell = Cell:New(63, 12)
         local guardian_ironfur_logic_cell = Cell:New(64, 12)
+        local guardian_rage_limit_cell = Cell:New(65, 12)
 
         local function set_guardian_aoe_enemy_count(value)
             guardian_aoe_enemy_count_cell:setCellRGBA(value * 10 / 255)
@@ -339,6 +356,13 @@ do
         end
         set_guardian_ironfur_logic(guardian_ironfur_logic:get_value())
         guardian_ironfur_logic:register_callback(set_guardian_ironfur_logic)
+
+
+        local function set_guardian_rage_limit(value)
+            guardian_rage_limit_cell:setCellRGBA(value / 255)
+        end
+        set_guardian_rage_limit(guardian_rage_limit:get_value())
+        guardian_rage_limit:register_callback(set_guardian_rage_limit)
     end
 
     insert(InitUI, InitializeGuardianSettingCell)
