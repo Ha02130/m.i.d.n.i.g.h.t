@@ -65,7 +65,7 @@ Private Matrix of Infinite Death Nightfall Iteration Generation Host Terminal
 
 ## 当前repo专精支持情况
 
-- **血DK** 比较OK，可以用在13层及以下的大米，需要自行开冰刃和吸血鬼、符文剑简易手动开或爆发模式。
+- **血DK**：比较OK，可以用在13层及以下的大米，需要自行开冰刃和吸血鬼、符文剑简易手动开或爆发模式。
 - **熊德**：相对OK，可以用在13层及以下的大米，需要自行提前开爆发、本能。
 - **奶德**：制作中。
 
