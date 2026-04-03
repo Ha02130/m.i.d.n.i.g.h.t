@@ -163,5 +163,5 @@ class CharCell(CellRegion):
         if white_count == 10:
             return 0
         if white_count >= 11:
-            return 20
+            return 10
         return 0

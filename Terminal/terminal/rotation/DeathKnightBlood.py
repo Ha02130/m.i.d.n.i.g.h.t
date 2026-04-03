@@ -303,6 +303,14 @@ class DeathKnightBlood(BaseRotation):
                 if ctx.combat_time < 10:
                     return self.cast(f"{main_target.unitToken}符文刃舞")
 
+        # 符文有3个以上，积极打心打
+        if runes >= 3:
+            if ctx.spell_cooldown_ready("心脏打击", spell_queue_window):
+                if (main_target is not None):
+                    return self.cast(f"{main_target.unitToken}心脏打击")
+                elif player.enemyCount >= 1:
+                    return self.cast("就近心脏打击")
+
         # 如果目标也在近战，看起来没拉更多怪的欲望，那就更积极的用血沸腾
         if ctx.spell_charges_ready("血液沸腾", 1, spell_queue_window):
             if target.exists and target.canAttack and target.isInMeleeRange:
