@@ -37,6 +37,8 @@ Private Matrix of Infinite Death Nightfall Iteration Generation Host Terminal
 
 访问[repo discussions](https://github.com/liantian-cn/M.I.D.N.I.G.H.T/discussions)
 
+[WA1KEY Discord](https://discord.gg/9z7Ubbabpg)
+
 ## 当前repo专精支持情况
 
 - **血DK**：比较OK，可以用在13层及以下的大米，需要自行开冰刃和吸血鬼、符文剑简易手动开或爆发模式。
