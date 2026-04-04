@@ -73,7 +73,7 @@ CoPASnrjTdwaLTX9NnLQoJJXfwMz2MzwMmZmhZbmZmmZxMjZmxAAAAAmxMzMzMDzYMAYMzMzAAAYmZbM
 ```
 CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmxswMjZWmZZeAmZZZgZzwoJamZWYmZmlxMAAAAAAMjtZAAAAomZZWmZmBAwCzMPAwy2MDDYxiBAzsBD
 ```
-- **奶德**：制作中。
+- **奶德**：相对OK。
 
 PS：目前熊T和血DK还是下水道难兄难弟，还是需要有点副本理解才能玩的。
 
