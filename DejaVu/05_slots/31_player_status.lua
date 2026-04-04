@@ -111,6 +111,8 @@ local function InitializePlayerStatus() -- 初始化玩家状态槽位
 
 
     local function updateStdFrequency()
+        -- print(COLOR.CLASS[select(2, UnitClass("player"))])
+        -- print("111111")
         cell.unitClass:setCell(COLOR.CLASS[select(2, UnitClass("player"))])                    -- 单位职业
         cell.unitRole:setCell(COLOR.ROLE[UnitGroupRolesAssigned("player")] or COLOR.ROLE.NONE) -- 单位角色
         local unitEnemyCount = 0

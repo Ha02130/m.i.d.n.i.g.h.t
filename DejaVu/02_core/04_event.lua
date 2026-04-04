@@ -408,8 +408,9 @@ eventFrame:HookScript("OnUpdate", function(self, elapsed)
     local stdFrequencyTickOffset  = 1.0 / 5;
     highFrequencyTimeElapsed      = highFrequencyTickOffset + elapsed
     lowFrequencyTimeElapsed       = lowFrequencyTimeElapsed + elapsed
-    stdFrequencyTickOffset        = stdFrequencyTickOffset + elapsed
+    stdFrequencyTimeElapsed       = stdFrequencyTimeElapsed + elapsed
     if highFrequencyTimeElapsed > highFrequencyTickOffset then
+        -- print("OnUpdateHigh")
         highFrequencyTimeElapsed = 0
         for updaterIndex = 1, #addonTable.Listeners.OnUpdateHigh do
             local updater = addonTable.Listeners.OnUpdateHigh[updaterIndex]
@@ -422,6 +423,7 @@ eventFrame:HookScript("OnUpdate", function(self, elapsed)
         end
     end
     if lowFrequencyTimeElapsed > lowFrequencyTickOffset then
+        -- print("OnUpdateLow")
         lowFrequencyTimeElapsed = 0
         for updaterIndex = 1, #addonTable.Listeners.OnUpdateLow do
             local updater = addonTable.Listeners.OnUpdateLow[updaterIndex]
@@ -430,7 +432,7 @@ eventFrame:HookScript("OnUpdate", function(self, elapsed)
     end
     if stdFrequencyTimeElapsed > stdFrequencyTickOffset then
         stdFrequencyTimeElapsed = 0
-        -- print("LowFrequencyTimeElapsed")
+        -- print("OnUpdateStd")
         for updaterIndex = 1, #addonTable.Listeners.OnUpdateStd do
             local updater = addonTable.Listeners.OnUpdateStd[updaterIndex]
             updater()
