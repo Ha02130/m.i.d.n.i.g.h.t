@@ -27,8 +27,9 @@ addonTable.UpdateFunc = addonTable.Listeners
 addonTable.Listeners.InitUI = {}
 
 addonTable.Listeners.OnUpdateHigh = {} -- 每秒20次高速刷新回调列表
-addonTable.Listeners.OnUpdateLow = {}  -- 每秒5次低速刷新回调列表
-addonTable.Listeners.OnUpdateStd = {}  -- 每秒10次刷新回调列表
+addonTable.Listeners.OnUpdateStd = {}  -- 每秒5次刷新回调列表
+addonTable.Listeners.OnUpdateLow = {}  -- 每秒1次低速刷新回调列表
+
 
 addonTable.Listeners.SPELLS_CHANGED = {}
 addonTable.Listeners.PLAYER_TALENT_CHANGED = {}           -- 所有涉及天赋变化的事件
@@ -403,8 +404,8 @@ local stdFrequencyTimeElapsed = 0
 eventFrame:HookScript("OnUpdate", function(self, elapsed)
     wipe(eventThisFrame)
     local highFrequencyTickOffset = 1.0 / 20;
-    local lowFrequencyTickOffset  = 1.0 / 5;
-    local stdFrequencyTickOffset  = 1.0 / 10;
+    local lowFrequencyTickOffset  = 1.0 / 1;
+    local stdFrequencyTickOffset  = 1.0 / 5;
     highFrequencyTimeElapsed      = highFrequencyTickOffset + elapsed
     lowFrequencyTimeElapsed       = lowFrequencyTimeElapsed + elapsed
     stdFrequencyTickOffset        = stdFrequencyTickOffset + elapsed

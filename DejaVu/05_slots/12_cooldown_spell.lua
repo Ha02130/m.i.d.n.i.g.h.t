@@ -26,7 +26,7 @@ local Cell = addonTable.Cell
 local BadgeCell = addonTable.BadgeCell
 local InitUI = addonTable.Listeners.InitUI                 -- 初始化 UI 函数列表
 local SPELLS_CHANGED = addonTable.Listeners.SPELLS_CHANGED -- SPELLS_CHANGED 回调列表
-local OnUpdateLow = addonTable.Listeners.OnUpdateLow       -- 低频刷新回调列表（约 2 Hz）
+local OnUpdateStd = addonTable.Listeners.OnUpdateStd       -- 低频刷新回调列表（约 2 Hz）
 local OnUpdateHigh = addonTable.Listeners.OnUpdateHigh     -- 高频刷新回调列表（约 10 Hz）
 
 local cooldownSpells = Slots.cooldownSpells                -- 普通冷却技能列表
@@ -141,7 +141,7 @@ local function InitializeCooldownFrame()
     table.insert(SPELLS_CHANGED, updateUnknown)   -- 技能变更时更新法术书收录状态
     table.insert(OnUpdateHigh, updateIcon)        -- 高频更新冷却剩余时间
     table.insert(OnUpdateHigh, updateRemaining)   -- 高频更新冷却剩余时间
-    table.insert(OnUpdateLow, updateOverlayed)    -- 低频更新技能高亮状态
+    table.insert(OnUpdateStd, updateOverlayed)    -- 低频更新技能高亮状态
     table.insert(OnUpdateHigh, updateUnusable)    -- 低频更新技能不可施放状态
 end
 table.insert(InitUI, InitializeCooldownFrame)     -- 初始化时创建冷却技能槽位

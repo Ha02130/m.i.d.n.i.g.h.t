@@ -45,7 +45,7 @@ local COLOR = addonTable.COLOR                                       -- 颜色�
 local Cell = addonTable.Cell                                         -- 基础色块单元
 local BadgeCell = addonTable.BadgeCell                               -- BadgeCell
 local OnUpdateHigh = addonTable.Listeners.OnUpdateHigh               -- 高频刷新回调列表
-local OnUpdateLow = addonTable.Listeners.OnUpdateLow                 -- 低频刷新回调列表
+local OnUpdateStd = addonTable.Listeners.OnUpdateStd                 -- 低频刷新回调列表
 local UNIT_CAST_CHANGED = addonTable.Listeners.UNIT_CAST_CHANGED     -- 单位施法改变事件列表
 local UNIT_HEALTH_CHANGED = addonTable.Listeners.UNIT_HEALTH_CHANGED -- 单位生命值改变事件列表
 local UNIT_POWER_CHANGED = addonTable.Listeners.UNIT_POWER_CHANGED   -- 单位能量百分改变事件列表
@@ -110,7 +110,7 @@ local function InitializePlayerStatus() -- 初始化玩家状态槽位
     cell.unitHealingPotionCooldownUsable = Cell:New(60, 15) -- 治疗药水可用
 
 
-    local function updateLowFrequency()
+    local function updateStdFrequency()
         cell.unitClass:setCell(COLOR.CLASS[select(2, UnitClass("player"))])                    -- 单位职业
         cell.unitRole:setCell(COLOR.ROLE[UnitGroupRolesAssigned("player")] or COLOR.ROLE.NONE) -- 单位角色
         local unitEnemyCount = 0
@@ -126,8 +126,8 @@ local function InitializePlayerStatus() -- 初始化玩家状态槽位
         end -- for plateIndex
 
         cell.unitEnemyCount:setCellRGBA(min(unitEnemyCount / 51, 1))
-    end -- updateLowFrequency
-    insert(OnUpdateLow, updateLowFrequency)
+    end -- updateStdFrequency
+    insert(OnUpdateStd, updateStdFrequency)
 
 
     local function updateHighFrequency()

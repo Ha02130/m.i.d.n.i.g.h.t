@@ -29,6 +29,7 @@ local PARTY_CHANGED = addonTable.Listeners.PARTY_CHANGED
 local COLOR = addonTable.COLOR                                       -- 颜色表
 local Cell = addonTable.Cell                                         -- 基础色块单元
 local OnUpdateHigh = addonTable.Listeners.OnUpdateHigh               -- 高频刷新回调列表
+local OnUpdateStd = addonTable.Listeners.OnUpdateStd                 -- 低频刷新回调列表
 local OnUpdateLow = addonTable.Listeners.OnUpdateLow                 -- 低频刷新回调列表
 local UNIT_HEALTH_CHANGED = addonTable.Listeners.UNIT_HEALTH_CHANGED -- 单位生命变化回调列表
 local UNIT_POWER_CHANGED = addonTable.Listeners.UNIT_POWER_CHANGED   -- 单位能量变化回调列表
@@ -72,7 +73,7 @@ local function InitializePartyBar()
         end
         insert(OnUpdateHigh, updateHighFrequency)
 
-        local function updateLowFrequency()
+        local function updateStdFrequency()
             unitExists = UnitExists(unitToken)
             if not unitExists then
                 return
@@ -85,7 +86,7 @@ local function InitializePartyBar()
             cell.unitIsInRangedRange:setCellBoolean(maxRange <= addonTable.RangedRange, COLOR.STATUS_BOOLEAN.IS_IN_RANGED_RANGE, COLOR.BLACK) -- 单位是否在远程范围内
             cell.unitIsInMeleeRange:setCellBoolean(maxRange <= 5, COLOR.STATUS_BOOLEAN.IS_IN_MELEE_RANGE, COLOR.BLACK)                        -- 单位是否在近战范围内
         end
-        insert(OnUpdateLow, updateLowFrequency)
+        insert(OnUpdateStd, updateStdFrequency)
 
         local function updateHealthPercentCell()
             if not unitExists then
@@ -117,12 +118,19 @@ local function InitializePartyBar()
             cell.unitClass:setCell(COLOR.CLASS[select(2, UnitClass(unitToken))])                    -- 单位职业
             cell.unitRole:setCell(COLOR.ROLE[UnitGroupRolesAssigned(unitToken)] or COLOR.ROLE.NONE) -- 单位角色
             updateHighFrequency()
-            updateLowFrequency()
+            updateStdFrequency()
             updateHealthPercentCell()
             updatePowerPercentCell()
             updateOnAuraEvent()
         end
+
+        local function updateUnitExist()
+            unitExists = UnitExists(unitToken)
+            cell.unitExists:setCellBoolean(unitExists, COLOR.STATUS_BOOLEAN.EXISTS, COLOR.BLACK)
+        end
         insert(PARTY_CHANGED, updateOnParthChanged)
+        insert(OnUpdateLow, updateOnParthChanged)
+        insert(OnUpdateHigh, updateUnitExist)
         updateOnParthChanged()
     end
 end

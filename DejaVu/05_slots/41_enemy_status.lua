@@ -49,6 +49,7 @@ local Cell = addonTable.Cell                                         -- 基础�
 local BadgeCell = addonTable.BadgeCell                               -- 图标单元
 
 local OnUpdateHigh = addonTable.Listeners.OnUpdateHigh               -- 高频刷新回调列表
+local OnUpdateStd = addonTable.Listeners.OnUpdateStd                 -- 低频刷新回调列表
 local OnUpdateLow = addonTable.Listeners.OnUpdateLow                 -- 低频刷新回调列表
 local TARGET_CHANGED = addonTable.Listeners.TARGET_CHANGED           -- 目标变化回调列表
 local FOCUS_CHANGED = addonTable.Listeners.FOCUS_CHANGED             -- 焦点变化回调列表
@@ -122,7 +123,7 @@ local function UnitStatusSequenceCreator(options)                   -- 创建一
     end
     insert(OnUpdateHigh, updateHighFrequency)
 
-    local function updateLowFrequency()
+    local function updateStdFrequency()
         if not unitExists then
             return
         end
@@ -134,7 +135,7 @@ local function UnitStatusSequenceCreator(options)                   -- 创建一
         cell.unitIsInRangedRange:setCellBoolean(maxRange <= addonTable.RangedRange, COLOR.STATUS_BOOLEAN.IS_IN_RANGED_RANGE, COLOR.BLACK) -- 单位是否在远程范围内
         cell.unitIsInMeleeRange:setCellBoolean(maxRange <= 5, COLOR.STATUS_BOOLEAN.IS_IN_MELEE_RANGE, COLOR.BLACK)                        -- 单位是否在近战范围内
     end
-    insert(OnUpdateLow, updateLowFrequency)
+    insert(OnUpdateStd, updateStdFrequency)
 
     local function updateHealthPercentCell()
         if not unitExists then
@@ -279,7 +280,7 @@ local function UnitStatusSequenceCreator(options)                   -- 创建一
             unitExists = true
             cell.unitExists:setCell(COLOR.STATUS_BOOLEAN.EXISTS) -- 单位存在状态
             updateHighFrequency()
-            updateLowFrequency()
+            updateStdFrequency()
             updateHealthPercentCell()
             updatePowerPercentCell()
             updateCastState()
@@ -295,7 +296,7 @@ local function UnitStatusSequenceCreator(options)                   -- 创建一
     elseif unit == "mouseover" then
         insert(MOUSEOVER_CHANGED, updateFullStatus)
     end
-    -- insert(OnUpdateLow, updateFullStatus)
+    insert(OnUpdateLow, updateFullStatus)
 end
 
 local function InitializeUniversalUnitStatus() -- 初始化通用单位状态槽位
