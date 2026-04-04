@@ -26,34 +26,8 @@ Private Matrix of Infinite Death Nightfall Iteration Generation Host Terminal
 
 ## 安装
 
-### DejaVu
-
-1. 安装DejaVu到游戏的插件路径。
-2. 自定义字体可能需要游戏内`/reload`一次生效。
-3. 由于技能书的bug，建议每次进入副本都`/reload`一次。
-
-### Terminal
-
-#### 依赖环境安装
-
-如果你能看到github这个说明，我默认你有能力下载到下面的所有东西。
-
-- 安装并下载python 3.12。 [官网](https://www.python.org/downloads/release/python-31210/)
-- 安装uv。[官网](https://github.com/astral-sh/uv)
-- 安装vscode。[官网](https://code.visualstudio.com/)
-- 使用vscode打开`Terminal`目录。
-- Ctrl + Shift + ` 打开终端。
-- `uv sync`完成依赖安装。
-- 执行`clear ; uv run .\main.py`运行程序。
-
-
-## 基础逻辑
-
-1. 游戏的屏幕右上角，会有一个`DejaVu`插件绘制的`M.A.T.R.I.X区域`。区域内由4x4和8x8的像素区域构成。
-2. `Terminal`会读取这个区域。
-3. 游戏逻辑由`Terminal`解析并执行。
-4. `DejaVu`负责按键绑定。
-5. `DejaVu`提供了一套完整的设置逻辑，游戏内设置菜单的设置结果会映射到`M.A.T.R.I.X区域`。
+- 下载[QClaw](https://qclaw.qq.com/)
+- 发送指令`请根据 https://github.com/liantian-cn/M.I.D.N.I.G.H.T/blob/main/INSTALL.md 为我安装MIDNIGHT`
 
 ## 进阶逻辑
 
