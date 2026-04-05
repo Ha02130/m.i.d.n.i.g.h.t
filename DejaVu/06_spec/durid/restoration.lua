@@ -62,6 +62,7 @@ insert(cooldownSpells, { spellID = 740, cdType = "cooldown" })     --  [宁静]
 insert(cooldownSpells, { spellID = 33763, cdType = "cooldown" })   --  [生命绽放]
 insert(cooldownSpells, { spellID = 132158, cdType = "cooldown" })  --  [自然迅捷]
 insert(cooldownSpells, { spellID = 102342, cdType = "cooldown" })  --  [铁木树皮]
+insert(cooldownSpells, { spellID = 48438, cdType = "cooldown" })   --  [野性生长]
 
 
 insert(chargeSpells, { spellID = 22842, cdType = "charges" }) --  [狂暴回复]
