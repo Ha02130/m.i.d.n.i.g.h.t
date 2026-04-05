@@ -49,7 +49,7 @@ class DruidGuardian(BaseRotation):
 
     def main_rotation(self, ctx: Context) -> tuple[str, float, str]:
 
-        print(f"当前时间: {datetime.now().strftime('%H:%M:%S')}, 旋转: {self.name}")
+        # print(f"当前时间: {datetime.now().strftime('%H:%M:%S')}, 旋转: {self.name}")
         if not ctx.enable:
             return self.idle("总开关未开启")
 

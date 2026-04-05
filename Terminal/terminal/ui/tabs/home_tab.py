@@ -57,14 +57,15 @@ class HomeTab(QWidget):
         self.info_layout.setContentsMargins(20, 0, 20, 0)
         self.info_layout.setSpacing(6)
 
-        self.info_title_label = QLabel('Terminal 控制面板')
+        self.info_title_label = QLabel('T.E.R.M.I.N.A.L')
         info_title_font = QFont('Microsoft YaHei')
         info_title_font.setPixelSize(18)
         self.info_title_label.setFont(info_title_font)
 
         self.info_body_label = QLabel(
-            '这里用于选择 rotation、截图显示器和游戏窗口，\n'
-            '右侧日志只记录关键状态变化和错误，不记录每一帧截图。'
+            '\n'
+            'DejaVu的MATRIX裂开了一条缝。那边，有人类不该看到的颜色..\n\n'
+            'MATRIX翻译完毕：那些敌人说他们不怕死。那你怕不怕……'
         )
         self.info_body_label.setWordWrap(True)
 
@@ -93,9 +94,9 @@ class HomeTab(QWidget):
         self.window_row_layout.setSpacing(8)
 
         self.window_combo = QComboBox()
-        self.window_combo.addItem('未选择游戏窗口', None)
+        self.window_combo.addItem('Select DejaVu', None)
 
-        self.refresh_window_button = QPushButton('刷新窗口')
+        self.refresh_window_button = QPushButton('Refresh')
         self.refresh_window_button.setFixedHeight(28)
         self.refresh_window_button.setFixedWidth(92)
         self.refresh_window_button.clicked.connect(self.refresh_windows_clicked.emit)

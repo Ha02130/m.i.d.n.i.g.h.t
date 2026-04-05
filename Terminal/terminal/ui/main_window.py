@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
-        self.setWindowTitle('Terminal')
+        self.setWindowTitle("Transcendental Entelechy Revelation Machine for Instinct Neural Awakening Link")
         self._setup_window_flags()
         self.setFixedSize(1600, 989)
 
@@ -152,7 +152,6 @@ class MainWindow(QMainWindow):
         del index
         self.selected_rotation_class = self.home_tab.current_rotation_class()
         self._rotation_hot_reload.set_rotation_class(self.selected_rotation_class)
-
 
     def _handle_open_title_editor_requested(self) -> None:
         if self.title_editor_dialog is None:
@@ -557,4 +556,3 @@ class MainWindow(QMainWindow):
             self.title_editor_dialog.close()
         self._shutdown_worker_thread()
         event.accept()
-
