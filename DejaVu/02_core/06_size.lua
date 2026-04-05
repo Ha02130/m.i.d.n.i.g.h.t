@@ -18,7 +18,10 @@ local GetScreenHeight = GetScreenHeight
 addonTable.Size = {}
 
 addonTable.Size.GetUIScaleFactor = function(pixelValue)
+    -- local physicalHeight = select(2, GetPhysicalScreenSize())
+    -- local logicalHeight = GetScreenHeight()
+    -- return (pixelValue * logicalHeight) / physicalHeight
     local physicalHeight = select(2, GetPhysicalScreenSize())
-    local logicalHeight = GetScreenHeight()
-    return (pixelValue * logicalHeight) / physicalHeight
+    local UI_scale = UIParent:GetScale()
+    return pixelValue * 768 / physicalHeight / UI_scale
 end
