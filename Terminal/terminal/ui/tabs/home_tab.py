@@ -142,7 +142,7 @@ class HomeTab(QWidget):
         self.footer_layout.setContentsMargins(40, 0, 40, 40)
         self.footer_layout.setSpacing(0)
 
-        self.version_label = QLabel('当前程序版本为12.0.1.66709')
+        self.version_label = QLabel('12.0.1.66709')
         version_label_font = QFont('Microsoft YaHei')
         version_label_font.setPixelSize(12)
         self.version_label.setFont(version_label_font)
