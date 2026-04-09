@@ -1,12 +1,12 @@
 -- 插件入口
-local addonName, DejaVuCore = ... -- luacheck: ignore addonName
+local addonName, DejaVu_Core = ... -- luacheck: ignore addonName
 
 -- Lua 原生函数
 local insert = table.insert
 local setmetatable = setmetatable
 
 -- 插件内引用
-local Profile = DejaVuCore.Profile -- Profile 模块
+local Profile = DejaVu_Core.Profile -- Profile 模块
 
 -- 缓存所有config对象, 相同key返回同一对象
 local config_cache = {}
@@ -70,8 +70,8 @@ local function Config(key)
     return config_cache[key]
 end
 
-DejaVuCore.Config = Config
-DejaVuCore.ConfigRows = {}
+DejaVu_Core.Config = Config
+DejaVu_Core.ConfigRows = {}
 
 local spell_queue_window = Config("spell_queue_window") -- 滑块配置项
 
@@ -82,4 +82,4 @@ end
 spell_queue_window:register_callback(spell_queue_window_updater)
 
 
-DejaVuCore.spell_queue_window = spell_queue_window
+DejaVu_Core.spell_queue_window = spell_queue_window

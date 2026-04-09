@@ -1,4 +1,4 @@
-local addonName, DejaVuCore = ... -- luacheck: ignore addonName
+local addonName, DejaVu_Core = ... -- luacheck: ignore addonName
 
 local GetTime = GetTime
 local max = math.max
@@ -8,11 +8,11 @@ local tostring = tostring
 local GetPhysicalScreenSize = GetPhysicalScreenSize
 local GetScreenHeight = GetScreenHeight
 
-_G["DejaVu"] = DejaVuCore
-DejaVuCore.DEBUG = true             -- 是否开启调试模式
-DejaVuCore.Enable = true            -- 是否开启插件
-DejaVuCore.VERSION = "12.0.1.66709" -- 插件版本
-DejaVuCore.RangedRange = 42         -- 默认的远程检测范围
+_G["DejaVu"] = DejaVu_Core
+DejaVu_Core.DEBUG = true             -- 是否开启调试模式
+DejaVu_Core.Enable = true            -- 是否开启插件
+DejaVu_Core.VERSION = "12.0.1.66709" -- 插件版本
+DejaVu_Core.RangedRange = 42         -- 默认的远程检测范围
 
 local function logging(msg)
     print("|cFFFFBB66[" .. addonName .. "]|r" .. tostring(msg))
@@ -27,27 +27,27 @@ local function GetUIScaleFactor(pixelValue)
 end
 
 
-DejaVuCore.Logging = logging
-DejaVuCore.GetUIScaleFactor = GetUIScaleFactor
+DejaVu_Core.Logging = logging
+DejaVu_Core.GetUIScaleFactor = GetUIScaleFactor
 
 
 
 
-DejaVuCore.BurstTime = GetTime() + 60
+DejaVu_Core.BurstTime = GetTime() + 60
 
-DejaVuCore.InBurst = function()
-    return DejaVuCore.BurstTime > GetTime()
+DejaVu_Core.InBurst = function()
+    return DejaVu_Core.BurstTime > GetTime()
 end
 
-DejaVuCore.BurstRemaining = function()
-    return min(60.0, max(0, DejaVuCore.BurstTime - GetTime()))
+DejaVu_Core.BurstRemaining = function()
+    return min(60.0, max(0, DejaVu_Core.BurstTime - GetTime()))
 end
 
 -- SLASH_BURST1 = "/burst"
 -- SlashCmdList["BURST"] = function(msg) -- -- luacheck: ignore addonName
 --     local delaySeconds = tonumber(msg)
 --     if delaySeconds then
---         DejaVuCore.BurstTime = GetTime() + delaySeconds
+--         DejaVu_Core.BurstTime = GetTime() + delaySeconds
 --     end
 -- end
 

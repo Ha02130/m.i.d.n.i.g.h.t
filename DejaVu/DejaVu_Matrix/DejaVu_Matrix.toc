@@ -2,8 +2,8 @@
 ## Title: DéjàVu Matrix
 ## Author: Émile Boirac
 ## Version: 12.0.1.66709
-## Dependencies: DejaVuCore
-## LoadWith: DejaVuCore
+## Dependencies: DejaVu_Core
+## LoadWith: DejaVu_Core
 ## Category: DéjàVu
 ## IconTexture: Interface\Icons\Ability_Domination_Rune01
 

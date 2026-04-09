@@ -8,12 +8,12 @@
   draft
 ]]
 -- 插件入口
-local addonName, DejaVuCore = ... -- luacheck: ignore addonName
+local addonName, DejaVu_Core = ... -- luacheck: ignore addonName
 
 -- WoW 官方 API
 local CreateColor = CreateColor
 
-DejaVuCore.COLOR = {
+DejaVu_Core.COLOR = {
     RED = CreateColor(255 / 255, 0, 0, 1),                                          -- 红色
     GREEN = CreateColor(0, 255 / 255, 0, 1),                                        -- 绿色
     BLUE = CreateColor(0, 0, 255 / 255, 1),                                         -- 蓝色
