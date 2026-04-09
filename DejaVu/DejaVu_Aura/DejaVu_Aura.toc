@@ -10,4 +10,10 @@
 
 
 # _Test.lua
+AuraCommon.lua
 PlayerHelpful.lua
+PlayerHarmful.lua
+
+TargetHarmful.lua
+FocusHarmful.lua
+MouseoverHarmful.lua

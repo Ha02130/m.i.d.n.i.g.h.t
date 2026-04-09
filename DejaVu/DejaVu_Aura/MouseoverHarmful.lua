@@ -9,13 +9,13 @@ local CreateFrame = CreateFrame
 -- 插件内引用
 local CreateAuraController = addonTable.CreateAuraController
 
-local MAX_AURA_COUNT = 30
-local BASE_X = 1
-local BASE_Y = 4
-local UNIT_KEY = "player"
-local AURA_FILTER = "HELPFUL"
+local MAX_AURA_COUNT = 16
+local BASE_X = 22
+local BASE_Y = 14
+local UNIT_KEY = "mouseover"
+local AURA_FILTER = "HARMFUL|PLAYER"
 local SORT_RULE = Enum.UnitAuraSortRule.Default
-local SORT_DIRECTION = Enum.UnitAuraSortDirection.Reverse
+local SORT_DIRECTION = Enum.UnitAuraSortDirection.Normal
 
 After(2, function()
     local controller = CreateAuraController({
@@ -26,14 +26,14 @@ After(2, function()
         baseY = BASE_Y,
         sortRule = SORT_RULE,
         sortDirection = SORT_DIRECTION,
-        colorMode = "playerHelpful",
+        colorMode = "unitHarmful",
     })
     controller.refreshAll()
 
     local eventFrame = CreateFrame("eventFrame")
-    local fastTimeElapsed = -random()     -- 随机初始时间，避免所有事件在同一帧更新
-    local lowTimeElapsed = -random()      -- 随机初始时间，避免所有事件在同一帧更新
-    local superLowTimeElapsed = -random() -- 随机初始时间，避免所有事件在同一帧更新
+    local fastTimeElapsed = -random()
+    local lowTimeElapsed = -random()
+    local superLowTimeElapsed = -random()
     eventFrame:HookScript("OnUpdate", function(frame, elapsed)
         if frame == nil then
             return
@@ -80,7 +80,31 @@ After(2, function()
         end
     end
 
-    eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
+    function eventFrame:UPDATE_MOUSEOVER_UNIT()
+        if self == nil then
+            return
+        end
+        controller.refreshAll()
+    end
+
+    function eventFrame:CURSOR_CHANGED()
+        if self == nil then
+            return
+        end
+        controller.refreshAll()
+    end
+
+    function eventFrame:UNIT_FLAGS(unitToken)
+        if self == nil or unitToken ~= UNIT_KEY then
+            return
+        end
+        controller.refreshAll()
+    end
+
+    eventFrame:RegisterUnitEvent("UNIT_AURA", UNIT_KEY)
+    eventFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+    eventFrame:RegisterEvent("CURSOR_CHANGED")
+    eventFrame:RegisterUnitEvent("UNIT_FLAGS", UNIT_KEY)
     eventFrame:SetScript("OnEvent", function(self, event, ...)
         self[event](self, ...)
     end)
