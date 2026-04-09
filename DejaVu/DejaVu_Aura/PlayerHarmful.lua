@@ -80,7 +80,7 @@ After(2, function()
         end
     end
 
-    eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
+    eventFrame:RegisterUnitEvent("UNIT_AURA", UNIT_KEY)
     eventFrame:SetScript("OnEvent", function(self, event, ...)
         self[event](self, ...)
     end)
