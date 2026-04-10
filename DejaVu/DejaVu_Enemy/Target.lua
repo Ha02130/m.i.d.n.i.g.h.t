@@ -66,24 +66,24 @@ After(2, function()                         -- 延迟加载
     local inChanneling = false
     local updateAll
 
-    cell.exists = Cell:New(posX + 0, posY + 0)                  -- 单位存在状态
-    cell.isAlive = Cell:New(posX + 0, posY + 1)                 -- 单位是否存活
-    cell.unitClass = Cell:New(posX + 1, posY + 0)               -- 单位职业
-    cell.unitRole = Cell:New(posX + 1, posY + 1)                -- 单位角色
-    cell.healthPercent = Cell:New(posX + 2, posY + 0)           -- 单位生命值百分比
-    cell.powerPercent = Cell:New(posX + 2, posY + 1)            -- 单位能量百分比
-    cell.isEnemy = Cell:New(posX + 3, posY + 0)                 -- 单位是否敌对
-    cell.canAttack = Cell:New(posX + 3, posY + 1)               -- 单位是否可攻击
-    cell.isInRangedRange = Cell:New(posX + 4, posY + 0)         -- 单位是否在远程范围内
-    cell.isInMeleeRange = Cell:New(posX + 4, posY + 1)          -- 单位是否在近战范围内
-    cell.isInCombat = Cell:New(posX + 5, posY + 0)              -- 单位是否在战斗中
-    cell.isTarget = Cell:New(posX + 5, posY + 1)                -- 单位是否为目标
-    cell.castIcon = BadgeCell:New(posX + 6, posY + 0)           -- 单位施法图标
-    cell.channelIcon = BadgeCell:New(posX + 8, posY + 0)        -- 单位通道图标
-    cell.castDuration = Cell:New(posX + 10, posY + 0)           -- 单位施法持续时间
-    cell.channelDuration = Cell:New(posX + 10, posY + 1)        -- 单位通道持续时间
-    cell.castIsInterruptible = Cell:New(posX + 11, posY + 0)    -- 单位施法是否可中断
-    cell.channelIsInterruptible = Cell:New(posX + 11, posY + 1) -- 单位通道是否可中断
+    cell.exists = Cell:New(posX + 0, posY + 0)                  -- 单位存在状态 / updateUnitExists
+    cell.isAlive = Cell:New(posX + 0, posY + 1)                 -- 单位是否存活 / updateUnitBasicStatus
+    cell.unitClass = Cell:New(posX + 1, posY + 0)               -- 单位职业 / updateClassAndRole
+    cell.unitRole = Cell:New(posX + 1, posY + 1)                -- 单位角色 / updateClassAndRole
+    cell.healthPercent = Cell:New(posX + 2, posY + 0)           -- 单位生命值百分比 / updateHealth
+    cell.powerPercent = Cell:New(posX + 2, posY + 1)            -- 单位能量百分比 / updatePower
+    cell.isEnemy = Cell:New(posX + 3, posY + 0)                 -- 单位是否敌对 / updateUnitBasicStatus
+    cell.canAttack = Cell:New(posX + 3, posY + 1)               -- 单位是否可攻击 / updateUnitBasicStatus
+    cell.isInRangedRange = Cell:New(posX + 4, posY + 0)         -- 单位是否在远程范围内 / updateRangeStatus
+    cell.isInMeleeRange = Cell:New(posX + 4, posY + 1)          -- 单位是否在近战范围内 / updateRangeStatus
+    cell.isInCombat = Cell:New(posX + 5, posY + 0)              -- 单位是否在战斗中 / updateUnitBasicStatus
+    cell.isTarget = Cell:New(posX + 5, posY + 1)                -- 单位是否为目标 / updateUnitBasicStatus
+    cell.castIcon = BadgeCell:New(posX + 6, posY + 0)           -- 单位施法图标 / updateCastAndChannel
+    cell.channelIcon = BadgeCell:New(posX + 8, posY + 0)        -- 单位通道图标 / updateCastAndChannel
+    cell.castDuration = Cell:New(posX + 10, posY + 0)           -- 单位施法持续时间 / updateCastAndChannelDuration
+    cell.channelDuration = Cell:New(posX + 10, posY + 1)        -- 单位通道持续时间 / updateCastAndChannelDuration
+    cell.castIsInterruptible = Cell:New(posX + 11, posY + 0)    -- 单位施法是否可中断 / updateCastAndChannel
+    cell.channelIsInterruptible = Cell:New(posX + 11, posY + 1) -- 单位通道是否可中断 / updateCastAndChannel
 
     local function clearAll()
         cell.exists:clearCell()                 -- 单位存在状态 / updateUnitExists
