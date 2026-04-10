@@ -28,6 +28,7 @@ local UnitInVehicle = UnitInVehicle
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitIsUnit = UnitIsUnit
 local GetUnitAuraInstanceIDs = C_UnitAuras.GetUnitAuraInstanceIDs
+local IsSpellInRange = C_Spell.IsSpellInRange
 
 local GetItemCooldown = C_Container.GetItemCooldown
 
@@ -37,6 +38,7 @@ local DejaVu = _G["DejaVu"]
 local COLOR = DejaVu.COLOR
 local Cell = DejaVu.Cell
 local BadgeCell = DejaVu.BadgeCell
+local MeleeCheckSpellId = DejaVu.MeleeCheckSpellId
 
 local function itemUsable(itemId)
     if not itemId then
@@ -57,49 +59,49 @@ zeroToOneCurve:SetType(Enum.LuaCurveType.Linear)
 zeroToOneCurve:AddPoint(0.0, CreateColor(0, 0, 0, 1))
 zeroToOneCurve:AddPoint(1.0, CreateColor(1, 1, 1, 1))
 
-local cell = {}                                             -- 状态单元格，提供给外部调用以更新状态显示
-local touch = {}                                            -- 触发器，提供给外部调用以触发状态更新
+local cell = {}                                         -- 状态单元格，提供给外部调用以更新状态显示
+local touch = {}                                        -- 触发器，提供给外部调用以触发状态更新
 
-After(2, function()                                         -- 延迟加载
-    local eventFrame = CreateFrame("Frame")                 -- 事件框架
+After(2, function()                                     -- 延迟加载
+    local eventFrame = CreateFrame("Frame")             -- 事件框架
 
-    cell.castIcon = BadgeCell:New(45, 14)                   -- 单位施法图标 / updateCastAndChannel
-    cell.channelIcon = BadgeCell:New(47, 14)                -- 单位通道图标 / updateCastAndChannel
+    cell.castIcon = BadgeCell:New(45, 14)               -- 单位施法图标 / updateCastAndChannel
+    cell.channelIcon = BadgeCell:New(47, 14)            -- 单位通道图标 / updateCastAndChannel
     -- 48列
-    cell.unitIsAlive = Cell:New(49, 15)                     -- 存活 / updateUnitBasicStatus
+    cell.isAlive = Cell:New(49, 15)                     -- 存活 / updateUnitBasicStatus
     -- 49列
-    cell.unitClass = Cell:New(50, 14)                       -- 玩家的职业 / updateClassAndRole
-    cell.unitRole = Cell:New(50, 15)                        -- 玩家的角色 / updateClassAndRole
+    cell.class = Cell:New(50, 14)                       -- 玩家的职业 / updateClassAndRole
+    cell.role = Cell:New(50, 15)                        -- 玩家的角色 / updateClassAndRole
     -- 50 列
-    cell.unitHealthPercent = Cell:New(51, 14)               -- 生命值百分比  / updateHealth
-    cell.unitPowerPercent = Cell:New(51, 15)                -- 主能量百分比 / updatePower
+    cell.healthPercent = Cell:New(51, 14)               -- 生命值百分比  / updateHealth
+    cell.powerPercent = Cell:New(51, 15)                -- 主能量百分比 / updatePower
     -- 51列
-    cell.unitIsInCombat = Cell:New(52, 14)                  -- 在战斗中 / updateUnitBasicStatus
-    cell.unitIsTarget = Cell:New(52, 15)                    -- 是目标 / updateUnitBasicStatus
+    cell.isInCombat = Cell:New(52, 14)                  -- 在战斗中 / updateUnitBasicStatus
+    cell.isTarget = Cell:New(52, 15)                    -- 是目标 / updateUnitBasicStatus
     -- 52列
-    cell.unitHasBigDefense = Cell:New(53, 14)               -- 有大防御值 / updateAura
-    cell.unitHasDispellableDebuff = Cell:New(53, 15)        -- 有可驱散的减益效果 / updateAura
+    cell.hasBigDefense = Cell:New(53, 14)               -- 有大防御值 / updateAura
+    cell.hasDispellableDebuff = Cell:New(53, 15)        -- 有可驱散的减益效果 / updateAura
     -- 53列
-    cell.castDuration = Cell:New(54, 14)                    -- 施法持续时间 / updateCastAndChannelDuration
-    cell.channelDuration = Cell:New(54, 15)                 -- 通道持续时间 / updateCastAndChannelDuration
+    cell.castDuration = Cell:New(54, 14)                -- 施法持续时间 / updateCastAndChannelDuration
+    cell.channelDuration = Cell:New(54, 15)             -- 通道持续时间 / updateCastAndChannelDuration
     -- -- 54列
-    cell.unitIsEmpowering = Cell:New(55, 14)                -- 在蓄力   / updateCastAndChannel
-    cell.unitEmpoweringStage = Cell:New(55, 15)             -- 蓄力阶段
+    cell.isEmpowering = Cell:New(55, 14)                -- 在蓄力   / updateCastAndChannel
+    cell.empoweringStage = Cell:New(55, 15)             -- 蓄力阶段 / updateCastAndChannel
     -- 55列
-    cell.unitIsMoving = Cell:New(56, 14)                    -- 在移动 / updateUnitActionStatus
-    cell.unitIsMounted = Cell:New(56, 15)                   -- 在坐骑 / updateUnitActionStatus
+    cell.isMoving = Cell:New(56, 14)                    -- 在移动 / updateUnitActionStatus
+    cell.isMounted = Cell:New(56, 15)                   -- 在坐骑 / updateUnitActionStatus
     -- 56列
-    cell.unitEnemyCount = Cell:New(57, 14)                  -- 敌人数量
-    cell.unitIsSpellTargeting = Cell:New(57, 15)            -- 正在选择目标 / updateUnitActionStatus
+    cell.enemyCount = Cell:New(57, 14)                  -- 敌人数量
+    cell.isSpellTargeting = Cell:New(57, 15)            -- 正在选择目标 / updateUnitActionStatus
     -- 57列
-    cell.unitIsChatInputActive = Cell:New(58, 14)           -- 正在聊天输入 / updateUnitActionStatus
-    cell.unitIsInGroupOrRaid = Cell:New(58, 15)             -- 在队伍/团队中 / updateUnitGroupStatus
+    cell.isChatInputActive = Cell:New(58, 14)           -- 正在聊天输入 / updateUnitActionStatus
+    cell.isInGroupOrRaid = Cell:New(58, 15)             -- 在队伍/团队中 / updateUnitGroupStatus
     -- 58列
-    cell.unitTrinket1CooldownUsable = Cell:New(59, 14)      -- 饰品 1可用 / updateTrinketUsable
-    cell.unitTrinket2CooldownUsable = Cell:New(59, 15)      -- 饰品 2可用 / updateTrinketUsable
+    cell.trinket1CooldownUsable = Cell:New(59, 14)      -- 饰品 1可用 / updateTrinketUsable
+    cell.trinket2CooldownUsable = Cell:New(59, 15)      -- 饰品 2可用 / updateTrinketUsable
     -- 59列
-    cell.unitHealthstoneCooldownUsable = Cell:New(60, 14)   -- 生命石可用 / updateHealingItemUsable
-    cell.unitHealingPotionCooldownUsable = Cell:New(60, 15) -- 治疗药水可用 / updateHealingItemUsable
+    cell.healthstoneCooldownUsable = Cell:New(60, 14)   -- 生命石可用 / updateHealingItemUsable
+    cell.healingPotionCooldownUsable = Cell:New(60, 15) -- 治疗药水可用 / updateHealingItemUsable
 
 
 
@@ -108,8 +110,8 @@ After(2, function()                                         -- 延迟加载
     -- 职业和颜色
     -- 低频刷新
     local function updateClassAndRole()
-        cell.unitClass:setCell(COLOR.CLASS[select(2, UnitClass("player"))])                    -- 单位职业
-        cell.unitRole:setCell(COLOR.ROLE[UnitGroupRolesAssigned("player")] or COLOR.ROLE.NONE) -- 单位角色
+        cell.class:setCell(COLOR.CLASS[select(2, UnitClass("player"))])                    -- 单位职业
+        cell.role:setCell(COLOR.ROLE[UnitGroupRolesAssigned("player")] or COLOR.ROLE.NONE) -- 单位角色
     end
 
 
@@ -124,8 +126,8 @@ After(2, function()                                         -- 延迟加载
         touch.hasAuraUpdateOnFrame = true
         local bigDefenseTable = GetUnitAuraInstanceIDs("player", "HELPFUL|BIG_DEFENSIVE")
         local dispellableDebuffTable = GetUnitAuraInstanceIDs("player", "HARMFUL|RAID_PLAYER_DISPELLABLE")
-        cell.unitHasBigDefense:setCellBoolean(#bigDefenseTable > 0, COLOR.STATUS_BOOLEAN.HAS_BIG_DEFENSE, COLOR.BLACK)
-        cell.unitHasDispellableDebuff:setCellBoolean(#dispellableDebuffTable > 0, COLOR.STATUS_BOOLEAN.HAS_DISPELLABLE_DEBUFF, COLOR.BLACK)
+        cell.hasBigDefense:setCellBoolean(#bigDefenseTable > 0, COLOR.STATUS_BOOLEAN.HAS_BIG_DEFENSE, COLOR.BLACK)
+        cell.hasDispellableDebuff:setCellBoolean(#dispellableDebuffTable > 0, COLOR.STATUS_BOOLEAN.HAS_DISPELLABLE_DEBUFF, COLOR.BLACK)
     end
 
     function eventFrame:UNIT_AURA(unitToken, info)
@@ -145,7 +147,7 @@ After(2, function()                                         -- 延迟加载
             return
         end
         touch.hasHealthUpdateOnFrame = true
-        cell.unitHealthPercent:setCell(UnitHealthPercent("player", true, zeroToOneCurve)) -- 单位生命值百分比
+        cell.healthPercent:setCell(UnitHealthPercent("player", true, zeroToOneCurve)) -- 单位生命值百分比
     end
     function eventFrame:UNIT_MAXHEALTH(unitToken)
         updateHealth()
@@ -168,7 +170,7 @@ After(2, function()                                         -- 延迟加载
             return
         end
         touch.hasPowerUpdateOnFrame = true
-        cell.unitPowerPercent:setCell(UnitPowerPercent("player", UnitPowerType("player"), true, zeroToOneCurve)) -- 单位能量百分比
+        cell.powerPercent:setCell(UnitPowerPercent("player", UnitPowerType("player"), true, zeroToOneCurve)) -- 单位能量百分比
     end
     function eventFrame:UNIT_POWER_UPDATE(unitToken)
         updatePower()
@@ -180,17 +182,17 @@ After(2, function()                                         -- 延迟加载
     -- 更新单位基础状态
     -- 高频刷新
     local function updateUnitBasicStatus()
-        cell.unitIsAlive:setCellBoolean(UnitIsDeadOrGhost("player"), COLOR.BLACK, COLOR.STATUS_BOOLEAN.IS_ALIVE)          -- 单位是否存活
-        cell.unitIsInCombat:setCellBoolean(UnitAffectingCombat("player"), COLOR.STATUS_BOOLEAN.IS_IN_COMBAT, COLOR.BLACK) -- 单位是否在战斗中
-        cell.unitIsTarget:setCellBoolean(UnitIsUnit("player", "target"), COLOR.STATUS_BOOLEAN.IS_TARGET, COLOR.BLACK)     -- 单位是否为目标
+        cell.isAlive:setCellBoolean(UnitIsDeadOrGhost("player"), COLOR.BLACK, COLOR.STATUS_BOOLEAN.IS_ALIVE)          -- 单位是否存活
+        cell.isInCombat:setCellBoolean(UnitAffectingCombat("player"), COLOR.STATUS_BOOLEAN.IS_IN_COMBAT, COLOR.BLACK) -- 单位是否在战斗中
+        cell.isTarget:setCellBoolean(UnitIsUnit("player", "target"), COLOR.STATUS_BOOLEAN.IS_TARGET, COLOR.BLACK)     -- 单位是否为目标
     end
 
     -- 更新单位动作状态
     -- 高频刷新
     local function updateUnitActionStatus()
-        cell.unitIsMounted:setCellBoolean(UnitInVehicle("player") or IsMounted(), COLOR.STATUS_BOOLEAN.IS_MOUNTED, COLOR.BLACK) -- 单位是否在坐骑
-        cell.unitIsSpellTargeting:setCellBoolean(SpellIsTargeting(), COLOR.STATUS_BOOLEAN.IS_SPELL_TARGETING, COLOR.BLACK)      -- 单位是否正在选择目标
-        cell.unitIsChatInputActive:setCellBoolean(
+        cell.isMounted:setCellBoolean(UnitInVehicle("player") or IsMounted(), COLOR.STATUS_BOOLEAN.IS_MOUNTED, COLOR.BLACK) -- 单位是否在坐骑
+        cell.isSpellTargeting:setCellBoolean(SpellIsTargeting(), COLOR.STATUS_BOOLEAN.IS_SPELL_TARGETING, COLOR.BLACK)      -- 单位是否正在选择目标
+        cell.isChatInputActive:setCellBoolean(
             GetCurrentKeyBoardFocus() ~= nil,
             COLOR.STATUS_BOOLEAN.IS_CHAT_INPUT_ACTIVE,
             COLOR.BLACK
@@ -208,7 +210,7 @@ After(2, function()                                         -- 延迟加载
         end
         touch.hasMovementUpdateOnFrame = true
         -- 延迟刷新，确保移动状态稳定
-        cell.unitIsMoving:setCell(COLOR.STATUS_BOOLEAN.IS_MOVING) -- 单位是否在移动
+        cell.isMoving:setCell(COLOR.STATUS_BOOLEAN.IS_MOVING) -- 单位是否在移动
     end
 
     -- 基于事件停止
@@ -218,7 +220,7 @@ After(2, function()                                         -- 延迟加载
         end
         touch.hasMovementUpdateOnFrame = true
         -- 延迟刷新，确保移动状态稳定
-        cell.unitIsMoving:setCell(COLOR.BLACK) -- 单位是否在移动
+        cell.isMoving:setCell(COLOR.BLACK) -- 单位是否在移动
     end
     -- 补正
     local function updateMovement_fix()
@@ -227,7 +229,7 @@ After(2, function()                                         -- 延迟加载
         end
         touch.hasMovementUpdateOnFrame = true
         -- 延迟刷新，确保移动状态稳定
-        cell.unitIsMoving:setCellBoolean(GetUnitSpeed("player") > 0, COLOR.STATUS_BOOLEAN.IS_MOVING, COLOR.BLACK) -- 单位是否在移动
+        cell.isMoving:setCellBoolean(GetUnitSpeed("player") > 0, COLOR.STATUS_BOOLEAN.IS_MOVING, COLOR.BLACK) -- 单位是否在移动
     end
 
 
@@ -245,23 +247,37 @@ After(2, function()                                         -- 延迟加载
     -- 更新队伍状态
     -- 低频刷新
     local function updateUnitGroupStatus()
-        cell.unitIsInGroupOrRaid:setCellBoolean(IsInGroup() or IsInRaid(), COLOR.STATUS_BOOLEAN.IS_IN_GROUP_OR_RAID, COLOR.BLACK) -- 单位是否在队伍/团队中
+        cell.isInGroupOrRaid:setCellBoolean(IsInGroup() or IsInRaid(), COLOR.STATUS_BOOLEAN.IS_IN_GROUP_OR_RAID, COLOR.BLACK) -- 单位是否在队伍/团队中
     end
 
     -- 更新饰品可用状态
     -- 低频刷新
     local function updateTrinketUsable()
-        cell.unitTrinket1CooldownUsable:setCellBoolean(slotUsable(13), COLOR.STATUS_BOOLEAN.TRINKET_1_USABLE, COLOR.BLACK) -- 饰品 1是否可用
-        cell.unitTrinket2CooldownUsable:setCellBoolean(slotUsable(14), COLOR.STATUS_BOOLEAN.TRINKET_2_USABLE, COLOR.BLACK) -- 饰品 2是否可用
+        cell.trinket1CooldownUsable:setCellBoolean(slotUsable(13), COLOR.STATUS_BOOLEAN.TRINKET_1_USABLE, COLOR.BLACK) -- 饰品 1是否可用
+        cell.trinket2CooldownUsable:setCellBoolean(slotUsable(14), COLOR.STATUS_BOOLEAN.TRINKET_2_USABLE, COLOR.BLACK) -- 饰品 2是否可用
     end
 
     -- 更新治疗物品可用状态
     -- 低频刷新
     local function updateHealingItemUsable()
-        cell.unitHealthstoneCooldownUsable:setCellBoolean(itemUsable(224464), COLOR.STATUS_BOOLEAN.HEALTHSTONE_USABLE, COLOR.BLACK)      -- 生命石是否可用
-        cell.unitHealingPotionCooldownUsable:setCellBoolean(itemUsable(258138), COLOR.STATUS_BOOLEAN.HEALING_POTION_USABLE, COLOR.BLACK) -- 治疗药水是否可用
+        cell.healthstoneCooldownUsable:setCellBoolean(itemUsable(224464), COLOR.STATUS_BOOLEAN.HEALTHSTONE_USABLE, COLOR.BLACK)      -- 生命石是否可用
+        cell.healingPotionCooldownUsable:setCellBoolean(itemUsable(258138), COLOR.STATUS_BOOLEAN.HEALING_POTION_USABLE, COLOR.BLACK) -- 治疗药水是否可用
     end
 
+    -- 更新附近敌人数量
+    -- 中频刷新
+    local function updateEnemyCount()
+        local count = 0
+        if MeleeCheckSpellId then
+            for i = 1, 8 do
+                local unit = "nameplate" .. i
+                if UnitExists(unit) and UnitCanAttack("player", unit) and IsSpellInRange(MeleeCheckSpellId, unit) then
+                    count = count + 1
+                end
+            end
+        end
+        cell.enemyCount:setCellRGBA(min(count / 51, 1))
+    end
 
     -- 更新施法、通道和蓄力状态
     -- 基于 UNIT_SPELLCAST_START、UNIT_SPELLCAST_STOP、UNIT_SPELLCAST_CHANNEL_START、UNIT_SPELLCAST_CHANNEL_STOP、UNIT_SPELLCAST_CHANNEL_UPDATE 事件
@@ -280,6 +296,8 @@ After(2, function()                                         -- 延迟加载
             cell.castIcon:setCell(castIcon, COLOR.SPELL_TYPE.PLAYER_SPELL) -- 单位施法图标
             cell.channelIcon:clearCell()                                   -- 通道图标
             cell.channelDuration:clearCell()                               -- 通道持续时间
+            cell.isEmpowering:clearCell()                                  -- 蓄力状态
+            cell.empoweringStage:clearCell()                               -- 蓄力阶段
             return                                                         -- 在施法就不可在通道, 这里可以返回了。
         else
             inCasting = false
@@ -295,11 +313,11 @@ After(2, function()                                         -- 延迟加载
             cell.castDuration:clearCell()                                        -- 单位施法剩余
             local isEmpowered = select(9, UnitChannelInfo("player"))
             if isEmpowered then
-                cell.unitIsEmpowering:setCellBoolean(true, COLOR.STATUS_BOOLEAN.IS_EMPOWERING, COLOR.BLACK)
-                cell.unitEmpoweringStage:setCell(zeroToOneCurve(UnitEmpoweredStageDurations("player")))
+                cell.isEmpowering:setCellBoolean(true, COLOR.STATUS_BOOLEAN.IS_EMPOWERING, COLOR.BLACK)
+                cell.empoweringStage:setCell(zeroToOneCurve(UnitEmpoweredStageDurations("player")))
             else
-                cell.unitIsEmpowering:setCell(COLOR.BLACK)
-                cell.unitEmpoweringStage:setCell(COLOR.BLACK)
+                cell.isEmpowering:setCell(COLOR.BLACK)
+                cell.empoweringStage:setCell(COLOR.BLACK)
             end -- isEmpowered
         else
             inChanneling = false
@@ -395,6 +413,7 @@ After(2, function()                                         -- 延迟加载
         lowTimeElapsed = lowTimeElapsed + elapsed
         if lowTimeElapsed > 0.5 then
             lowTimeElapsed = lowTimeElapsed - 0.5
+            updateEnemyCount()
             updateUnitBasicStatus()
             updateUnitActionStatus()
         end

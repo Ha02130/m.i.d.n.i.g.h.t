@@ -7,10 +7,10 @@
 ## Category: DéjàVu
 ## IconTexture: Interface\Icons\Ability_Domination_Rune01
 
-DejaVu_Matrix.lua
-DejaVu_Cell.lua
-DejaVu_MegaCell.lua
-DejaVu_BadgeCell.lua
-DejaVu_CharCell.lua
-
+Matrix.lua
+Cell.lua
+MegaCell.lua
+BadgeCell.lua
+CharCell.lua
+Bar.lua
 # _Test.lua
