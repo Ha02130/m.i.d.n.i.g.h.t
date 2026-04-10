@@ -70,8 +70,8 @@ After(2, function()                                     -- 延迟加载
     -- 48列
     cell.isAlive = Cell:New(49, 15)                     -- 存活 / updateUnitBasicStatus
     -- 49列
-    cell.class = Cell:New(50, 14)                       -- 玩家的职业 / updateClassAndRole
-    cell.role = Cell:New(50, 15)                        -- 玩家的角色 / updateClassAndRole
+    cell.unitClass = Cell:New(50, 14)                   -- 玩家的职业 / updateClassAndRole
+    cell.unitRole = Cell:New(50, 15)                    -- 玩家的角色 / updateClassAndRole
     -- 50 列
     cell.healthPercent = Cell:New(51, 14)               -- 生命值百分比  / updateHealth
     cell.powerPercent = Cell:New(51, 15)                -- 主能量百分比 / updatePower
@@ -110,8 +110,8 @@ After(2, function()                                     -- 延迟加载
     -- 职业和颜色
     -- 低频刷新
     local function updateClassAndRole()
-        cell.class:setCell(COLOR.CLASS[select(2, UnitClass("player"))])                    -- 单位职业
-        cell.role:setCell(COLOR.ROLE[UnitGroupRolesAssigned("player")] or COLOR.ROLE.NONE) -- 单位角色
+        cell.unitClass:setCell(COLOR.CLASS[select(2, UnitClass("player"))])                    -- 单位职业
+        cell.unitRole:setCell(COLOR.ROLE[UnitGroupRolesAssigned("player")] or COLOR.ROLE.NONE) -- 单位角色
     end
 
 

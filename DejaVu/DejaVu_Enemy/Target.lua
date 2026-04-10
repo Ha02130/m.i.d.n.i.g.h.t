@@ -1,0 +1,441 @@
+-- luacheck: globals UnitAffectingCombat UnitCastingDuration UnitCastingInfo UnitChannelDuration UnitChannelInfo UnitClass UnitGroupRolesAssigned UnitHealthPercent UnitIsDeadOrGhost UnitIsEnemy UnitIsUnit UnitPowerPercent UnitPowerType
+local addonName, addonTable = ... -- luacheck: ignore addonName -- 插件入口固定写法
+
+-- Lua 原生函数
+local pairs = pairs
+local random = math.random
+local select = select
+
+-- WoW 官方 API
+local After = C_Timer.After
+local CreateColor = CreateColor
+local CreateColorCurve = C_CurveUtil.CreateColorCurve
+local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean
+local Enum = Enum
+local CreateFrame = CreateFrame
+local IsSpellInRange = C_Spell.IsSpellInRange
+local UnitAffectingCombat = UnitAffectingCombat
+local UnitCanAttack = UnitCanAttack
+local UnitCastingDuration = UnitCastingDuration
+local UnitCastingInfo = UnitCastingInfo
+local UnitChannelDuration = UnitChannelDuration
+local UnitChannelInfo = UnitChannelInfo
+local UnitClass = UnitClass
+local UnitExists = UnitExists
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
+local UnitHealthPercent = UnitHealthPercent
+local UnitIsDeadOrGhost = UnitIsDeadOrGhost
+local UnitIsEnemy = UnitIsEnemy
+local UnitIsUnit = UnitIsUnit
+local UnitPowerPercent = UnitPowerPercent
+local UnitPowerType = UnitPowerType
+
+-- DejaVu Core
+local DejaVu = _G["DejaVu"]
+local COLOR = DejaVu.COLOR
+local Cell = DejaVu.Cell
+local BadgeCell = DejaVu.BadgeCell
+local MeleeCheckSpellId = DejaVu.MeleeCheckSpellId
+local RangedCheckSpellId = DejaVu.RangedCheckSpellId
+
+local zeroToOneCurve = CreateColorCurve()
+zeroToOneCurve:SetType(Enum.LuaCurveType.Linear)
+zeroToOneCurve:AddPoint(0.0, CreateColor(0, 0, 0, 1))
+zeroToOneCurve:AddPoint(1.0, CreateColor(1, 1, 1, 1))
+
+local cell = {} -- 状态单元格，提供给外部调用以更新状态显示
+local touch = { -- 触发器，提供给外部调用以触发状态更新
+    hasUnitExistsUpdateOnFrame = false,       -- 本帧是否已经处理过单位存在状态更新
+    hasClassAndRoleUpdateOnFrame = false,     -- 本帧是否已经处理过职业和角色更新
+    hasHealthUpdateOnFrame = false,           -- 本帧是否已经处理过血量更新
+    hasPowerUpdateOnFrame = false,            -- 本帧是否已经处理过能量更新
+    hasCastOrChannelUpdateOnFrame = false,    -- 本帧是否已经处理过施法或通道更新
+    hasRangeStatusUpdateOnFrame = false,      -- 本帧是否已经处理过距离更新
+    hasUnitBasicStatusUpdateOnFrame = false,  -- 本帧是否已经处理过基础状态更新
+}
+
+local UNIT_KEY = "target" -- 目标单位
+local posX = 55           -- 起始 x 坐标
+local posY = 10           -- 起始 y 坐标
+
+After(2, function()                         -- 延迟加载
+    local eventFrame = CreateFrame("Frame") -- 事件框架
+
+    local unitExists = false
+    local inCasting = false
+    local inChanneling = false
+    local updateAll
+
+    cell.exists = Cell:New(posX + 0, posY + 0)                  -- 单位存在状态
+    cell.isAlive = Cell:New(posX + 0, posY + 1)                 -- 单位是否存活
+    cell.unitClass = Cell:New(posX + 1, posY + 0)               -- 单位职业
+    cell.unitRole = Cell:New(posX + 1, posY + 1)                -- 单位角色
+    cell.healthPercent = Cell:New(posX + 2, posY + 0)           -- 单位生命值百分比
+    cell.powerPercent = Cell:New(posX + 2, posY + 1)            -- 单位能量百分比
+    cell.isEnemy = Cell:New(posX + 3, posY + 0)                 -- 单位是否敌对
+    cell.canAttack = Cell:New(posX + 3, posY + 1)               -- 单位是否可攻击
+    cell.isInRangedRange = Cell:New(posX + 4, posY + 0)         -- 单位是否在远程范围内
+    cell.isInMeleeRange = Cell:New(posX + 4, posY + 1)          -- 单位是否在近战范围内
+    cell.isInCombat = Cell:New(posX + 5, posY + 0)              -- 单位是否在战斗中
+    cell.isTarget = Cell:New(posX + 5, posY + 1)                -- 单位是否为目标
+    cell.castIcon = BadgeCell:New(posX + 6, posY + 0)           -- 单位施法图标
+    cell.channelIcon = BadgeCell:New(posX + 8, posY + 0)        -- 单位通道图标
+    cell.castDuration = Cell:New(posX + 10, posY + 0)           -- 单位施法持续时间
+    cell.channelDuration = Cell:New(posX + 10, posY + 1)        -- 单位通道持续时间
+    cell.castIsInterruptible = Cell:New(posX + 11, posY + 0)    -- 单位施法是否可中断
+    cell.channelIsInterruptible = Cell:New(posX + 11, posY + 1) -- 单位通道是否可中断
+
+    local function clearAll()
+        cell.exists:clearCell()                 -- 单位存在状态 / updateUnitExists
+        cell.isAlive:clearCell()                -- 单位是否存活
+        cell.unitClass:clearCell()              -- 单位职业
+        cell.unitRole:clearCell()               -- 单位角色
+        cell.healthPercent:clearCell()          -- 单位生命值百分比 / updateHealth
+        cell.powerPercent:clearCell()           -- 单位能量百分比 / updatePower
+        cell.isEnemy:clearCell()                -- 单位是否敌对
+        cell.canAttack:clearCell()              -- 单位是否可攻击
+        cell.isInRangedRange:clearCell()        -- 单位是否在远程范围 / updateRangeStatus
+        cell.isInMeleeRange:clearCell()         -- 单位是否在近战范围 / updateRangeStatus
+        cell.isInCombat:clearCell()             -- 单位是否在战斗中 / updateUnitBasicStatus
+        cell.isTarget:clearCell()               -- 单位是否为目标 / updateUnitBasicStatus
+        cell.castIcon:clearCell()               -- 单位施法图标 / updateCastAndChannel
+        cell.channelIcon:clearCell()            -- 单位通道图标 / updateCastAndChannel
+        cell.castDuration:clearCell()           -- 单位施法持续时间 / updateCastAndChannelDuration
+        cell.channelDuration:clearCell()        -- 单位通道持续时间 / updateCastAndChannelDuration
+        cell.castIsInterruptible:clearCell()    -- 单位施法是否可中断 / updateCastAndChannel
+        cell.channelIsInterruptible:clearCell() -- 单位通道是否可中断 / updateCastAndChannel
+    end
+
+    -- 检测目标单位是否存在，更新存在状态
+    -- 基于 PLAYER_TARGET_CHANGED 事件
+    -- 低频刷新补正
+    local function updateUnitExists()
+        if touch.hasUnitExistsUpdateOnFrame then
+            return
+        end
+        touch.hasUnitExistsUpdateOnFrame = true
+        unitExists = UnitExists(UNIT_KEY)
+
+        if not unitExists then
+            inCasting = false
+            inChanneling = false
+            clearAll()
+            return
+        end
+
+        cell.exists:setCell(COLOR.STATUS_BOOLEAN.EXISTS) -- 单位存在状态
+    end
+
+    function eventFrame.PLAYER_TARGET_CHANGED()
+        updateAll()
+    end
+
+    eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+
+    -- 更新职业和角色
+    -- 低频刷新
+    local function updateClassAndRole()
+        if touch.hasClassAndRoleUpdateOnFrame then
+            return
+        end
+        touch.hasClassAndRoleUpdateOnFrame = true
+        if not unitExists then
+            return
+        end
+
+        cell.unitClass:setCell(COLOR.CLASS[select(2, UnitClass(UNIT_KEY))])                           -- 单位职业
+        cell.unitRole:setCell(COLOR.ROLE[UnitGroupRolesAssigned(UNIT_KEY)] or COLOR.ROLE.NONE)        -- 单位角色
+    end
+
+    -- 更新血量数据
+    -- 基于 UNIT_HEALTH 和 UNIT_MAXHEALTH 事件
+    -- 低频刷新补正
+    local function updateHealth()
+        if touch.hasHealthUpdateOnFrame then
+            return
+        end
+        touch.hasHealthUpdateOnFrame = true
+        if not unitExists then
+            return
+        end
+
+        cell.healthPercent:setCell(UnitHealthPercent(UNIT_KEY, true, zeroToOneCurve)) -- 单位生命值百分比
+    end
+
+    function eventFrame.UNIT_MAXHEALTH()
+        updateHealth()
+    end
+
+    function eventFrame.UNIT_HEALTH()
+        updateHealth()
+    end
+
+    eventFrame:RegisterUnitEvent("UNIT_MAXHEALTH", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_HEALTH", UNIT_KEY)
+
+    -- 更新能量数据
+    -- 基于 UNIT_POWER_UPDATE 事件
+    -- 低频刷新补正
+    local function updatePower()
+        if touch.hasPowerUpdateOnFrame then
+            return
+        end
+        touch.hasPowerUpdateOnFrame = true
+        if not unitExists then
+            return
+        end
+
+        cell.powerPercent:setCell(UnitPowerPercent(UNIT_KEY, UnitPowerType(UNIT_KEY), true, zeroToOneCurve)) -- 单位能量百分比
+    end
+
+    function eventFrame.UNIT_POWER_UPDATE()
+        updatePower()
+    end
+
+    eventFrame:RegisterUnitEvent("UNIT_POWER_UPDATE", UNIT_KEY)
+
+    -- 更新单位基础状态
+    -- 中频刷新
+    local function updateUnitBasicStatus()
+        if touch.hasUnitBasicStatusUpdateOnFrame then
+            return
+        end
+        touch.hasUnitBasicStatusUpdateOnFrame = true
+        if not unitExists then
+            return
+        end
+
+        cell.isAlive:setCellBoolean(UnitIsDeadOrGhost(UNIT_KEY), COLOR.BLACK, COLOR.STATUS_BOOLEAN.IS_ALIVE) -- 单位是否存活
+        cell.isEnemy:setCellBoolean(UnitIsEnemy(UNIT_KEY, "player"), COLOR.STATUS_BOOLEAN.IS_ENEMY, COLOR.BLACK)
+        cell.canAttack:setCellBoolean(UnitCanAttack(UNIT_KEY, "player"), COLOR.STATUS_BOOLEAN.CAN_ATTACK, COLOR.BLACK)
+        cell.isInCombat:setCellBoolean(UnitAffectingCombat(UNIT_KEY), COLOR.STATUS_BOOLEAN.IS_IN_COMBAT, COLOR.BLACK)
+        cell.isTarget:setCellBoolean(UnitIsUnit(UNIT_KEY, "target"), COLOR.STATUS_BOOLEAN.IS_TARGET, COLOR.BLACK)
+    end
+
+    -- 更新距离状态
+    -- 中频刷新
+    local function updateRangeStatus()
+        if touch.hasRangeStatusUpdateOnFrame then
+            return
+        end
+        touch.hasRangeStatusUpdateOnFrame = true
+        if not unitExists then
+            return
+        end
+
+        if RangedCheckSpellId then
+            cell.isInRangedRange:setCellBoolean(
+                IsSpellInRange(RangedCheckSpellId, UNIT_KEY) == true,
+                COLOR.STATUS_BOOLEAN.IS_IN_RANGED_RANGE,
+                COLOR.BLACK
+            )
+        else
+            cell.isInRangedRange:clearCell()
+        end
+
+        if MeleeCheckSpellId then
+            cell.isInMeleeRange:setCellBoolean(
+                IsSpellInRange(MeleeCheckSpellId, UNIT_KEY) == true,
+                COLOR.STATUS_BOOLEAN.IS_IN_MELEE_RANGE,
+                COLOR.BLACK
+            )
+        else
+            cell.isInMeleeRange:clearCell()
+        end
+    end
+
+    local function getSpellColor()
+        local spellInterruptibleColor = COLOR.SPELL_TYPE.ENEMY_SPELL_INTERRUPTIBLE
+        local spellNotInterruptibleColor = COLOR.SPELL_TYPE.ENEMY_SPELL_NOT_INTERRUPTIBLE
+
+        if not UnitCanAttack(UNIT_KEY, "player") then
+            spellInterruptibleColor = COLOR.SPELL_TYPE.PLAYER_SPELL
+            spellNotInterruptibleColor = COLOR.SPELL_TYPE.PLAYER_SPELL
+        end
+
+        return spellInterruptibleColor, spellNotInterruptibleColor
+    end
+
+    -- 更新施法和通道状态
+    -- 基于 UNIT_SPELLCAST_START、UNIT_SPELLCAST_STOP、UNIT_SPELLCAST_CHANNEL_START、
+    -- UNIT_SPELLCAST_CHANNEL_STOP、UNIT_SPELLCAST_CHANNEL_UPDATE 等事件
+    -- 低频刷新补正
+    local function updateCastAndChannel()
+        if touch.hasCastOrChannelUpdateOnFrame then
+            return
+        end
+        touch.hasCastOrChannelUpdateOnFrame = true
+        if not unitExists then
+            return
+        end
+
+        local spellInterruptibleColor, spellNotInterruptibleColor = getSpellColor()
+        local castIcon = select(3, UnitCastingInfo(UNIT_KEY))
+        local castNotInterruptible = select(8, UnitCastingInfo(UNIT_KEY))
+        if castIcon then
+            inCasting = true
+            inChanneling = false
+            cell.castIcon:setCell(
+                castIcon,
+                EvaluateColorFromBoolean(castNotInterruptible, spellNotInterruptibleColor, spellInterruptibleColor)
+            ) -- 单位施法图标
+            cell.castIsInterruptible:setCellBoolean(
+                castNotInterruptible,
+                spellNotInterruptibleColor,
+                spellInterruptibleColor
+            )                                        -- 单位施法是否可中断
+            cell.channelIcon:clearCell()            -- 单位通道图标
+            cell.channelIsInterruptible:clearCell() -- 单位通道是否可中断
+            cell.channelDuration:clearCell()        -- 单位通道持续时间
+            return
+        end
+
+        inCasting = false
+        cell.castIcon:clearCell()            -- 单位施法图标
+        cell.castIsInterruptible:clearCell() -- 单位施法是否可中断
+
+        local channelIcon = select(3, UnitChannelInfo(UNIT_KEY))
+        local channelNotInterruptible = select(7, UnitChannelInfo(UNIT_KEY))
+        if channelIcon then
+            inChanneling = true
+            cell.channelIcon:setCell(
+                channelIcon,
+                EvaluateColorFromBoolean(channelNotInterruptible, spellNotInterruptibleColor, spellInterruptibleColor)
+            ) -- 单位通道图标
+            cell.channelIsInterruptible:setCellBoolean(
+                channelNotInterruptible,
+                spellNotInterruptibleColor,
+                spellInterruptibleColor
+            )                                     -- 单位通道是否可中断
+            cell.castIcon:clearCell()            -- 单位施法图标
+            cell.castIsInterruptible:clearCell() -- 单位施法是否可中断
+            cell.castDuration:clearCell()        -- 单位施法持续时间
+            return
+        end
+
+        inChanneling = false
+        cell.channelIcon:clearCell()            -- 单位通道图标
+        cell.channelIsInterruptible:clearCell() -- 单位通道是否可中断
+    end
+
+    function eventFrame.UNIT_SPELLCAST_INTERRUPTED()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_START()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_STOP()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_SUCCEEDED()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_CHANNEL_START()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_CHANNEL_STOP()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_FAILED()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_CHANNEL_UPDATE()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_EMPOWER_START()
+        updateCastAndChannel()
+    end
+
+    function eventFrame.UNIT_SPELLCAST_EMPOWER_STOP()
+        updateCastAndChannel()
+    end
+
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_STOP", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_START", UNIT_KEY)
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_STOP", UNIT_KEY)
+
+    -- 更新施法和通道进度
+    -- 高频刷新
+    local function updateCastAndChannelDuration()
+        if not unitExists then
+            return
+        end
+
+        local castDuration = inCasting and UnitCastingDuration(UNIT_KEY) or nil
+        if castDuration then
+            cell.castDuration:setCell(castDuration:EvaluateElapsedPercent(zeroToOneCurve)) -- 单位施法持续时间
+        else
+            cell.castDuration:clearCell()                                                  -- 单位施法持续时间
+        end
+
+        local channelDuration = inChanneling and UnitChannelDuration(UNIT_KEY) or nil
+        if channelDuration then
+            cell.channelDuration:setCell(channelDuration:EvaluateElapsedPercent(zeroToOneCurve)) -- 单位通道持续时间
+        else
+            cell.channelDuration:clearCell()                                                     -- 单位通道持续时间
+        end
+    end
+
+    updateAll = function()
+        updateUnitExists()
+        updateClassAndRole()
+        updateHealth()
+        updatePower()
+        updateUnitBasicStatus()
+        updateRangeStatus()
+        updateCastAndChannel()
+        updateCastAndChannelDuration()
+    end
+
+    local fastTimeElapsed = -random()     -- 随机初始时间，避免所有事件在同一帧更新
+    local lowTimeElapsed = -random()      -- 随机初始时间，避免所有事件在同一帧更新
+    local superLowTimeElapsed = -random() -- 随机初始时间，避免所有事件在同一帧更新
+    eventFrame:HookScript("OnUpdate", function(_, elapsed)
+        -- 每帧重置触发器状态，确保状态更新函数在同一帧内只执行一次
+        for k in pairs(touch) do
+            touch[k] = false
+        end
+
+        fastTimeElapsed = fastTimeElapsed + elapsed
+        if fastTimeElapsed > 0.1 then
+            fastTimeElapsed = fastTimeElapsed - 0.1
+            updateCastAndChannelDuration()
+        end
+
+        lowTimeElapsed = lowTimeElapsed + elapsed
+        if lowTimeElapsed > 0.5 then
+            lowTimeElapsed = lowTimeElapsed - 0.5
+            updateUnitBasicStatus()
+            updateRangeStatus()
+        end
+
+        superLowTimeElapsed = superLowTimeElapsed + elapsed
+        if superLowTimeElapsed > 2 then
+            superLowTimeElapsed = superLowTimeElapsed - 2
+            updateUnitExists()
+            updateClassAndRole()
+            updateHealth()
+            updatePower()
+            updateCastAndChannel()
+        end
+    end)
+
+    eventFrame:SetScript("OnEvent", function(self, event, ...)
+        self[event](self, ...)
+    end)
+end)

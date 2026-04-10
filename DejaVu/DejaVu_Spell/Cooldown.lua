@@ -46,6 +46,7 @@ After(2, function()
     local cellMap = {}
     local validSpellID = {}
     local baseIDToSpellID = {}
+    local eventFrame = CreateFrame("eventFrame")
 
     local function getValidSpellID(spellID)
         if not spellID or not validSpellID[spellID] then
@@ -66,6 +67,7 @@ After(2, function()
         return spellID
     end
 
+    -- 初始化冷却技能单元格
     local function InitCellMap()
         for i = 1, #cooldownSpells do
             local spellID = cooldownSpells[i].spellID
@@ -97,6 +99,9 @@ After(2, function()
 
     InitCellMap()
 
+    -- 更新技能图标
+    -- 基于 SPELL_UPDATE_ICON 事件
+    -- 超低频刷新补正
     local function updateIcon(spellID)
         local iconID = GetSpellTexture(spellID)
         cellMap[spellID].icon:setCell(iconID, COLOR.SPELL_TYPE.PLAYER_SPELL)
@@ -108,6 +113,18 @@ After(2, function()
         end
     end
 
+    function eventFrame.SPELL_UPDATE_ICON(baseID)
+        local spellID = getSpellIDFromBaseID(baseID)
+        if not spellID then
+            return
+        end
+        updateIcon(spellID)
+    end
+
+    eventFrame:RegisterEvent("SPELL_UPDATE_ICON")
+
+    -- 更新冷却剩余时间
+    -- 低频刷新
     local function updateRemaining(spellID)
         local remaining = GetSpellCooldownDuration(spellID)
         local result = remaining:EvaluateRemainingDuration(remainingCurve)
@@ -120,6 +137,8 @@ After(2, function()
         end
     end
 
+    -- 更新技能高亮提示
+    -- 基于 SPELL_ACTIVATION_OVERLAY_GLOW_SHOW 和 SPELL_ACTIVATION_OVERLAY_GLOW_HIDE 事件
     local function updateOverlayed(spellID)
         local isOverlayed = EvaluateColorFromBoolean(IsSpellOverlayed(spellID), COLOR.SPELL_BOOLEAN.IS_HIGH_LIGHTED, COLOR.BLACK)
         cellMap[spellID].overlayed:setCell(isOverlayed)
@@ -131,6 +150,27 @@ After(2, function()
         end
     end
 
+    function eventFrame.SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(spellID)
+        local validID = getValidSpellID(spellID)
+        if not validID then
+            return
+        end
+        updateOverlayed(validID)
+    end
+
+    function eventFrame.SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(spellID)
+        local validID = getValidSpellID(spellID)
+        if not validID then
+            return
+        end
+        updateOverlayed(validID)
+    end
+
+    eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
+    eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
+
+    -- 更新可施放状态
+    -- 高频刷新
     local function updateUnusable(spellID)
         local isUsable = EvaluateColorFromBoolean(IsSpellUsable(spellID), COLOR.SPELL_BOOLEAN.IS_USABLE, COLOR.BLACK)
         cellMap[spellID].isUsable:setCell(isUsable)
@@ -142,6 +182,8 @@ After(2, function()
         end
     end
 
+    -- 更新已学会状态
+    -- 低频刷新
     local function updateUnknown(spellID)
         local isKnown = EvaluateColorFromBoolean(IsSpellInSpellBook(spellID), COLOR.SPELL_BOOLEAN.IS_KNOWN, COLOR.BLACK)
         cellMap[spellID].isKnown:setCell(isKnown)
@@ -161,12 +203,10 @@ After(2, function()
     updateUnknownAll()
 
 
-
-    local eventFrame = CreateFrame("eventFrame")
     local fastTimeElapsed = -random()     -- 随机初始时间，避免所有事件在同一帧更新
     local lowTimeElapsed = -random()      -- 随机初始时间，避免所有事件在同一帧更新
     local superLowTimeElapsed = -random() -- 随机初始时间，避免所有事件在同一帧更新
-    eventFrame:HookScript("OnUpdate", function(self, elapsed)
+    eventFrame:HookScript("OnUpdate", function(_, elapsed)
         fastTimeElapsed = fastTimeElapsed + elapsed
         if fastTimeElapsed > 0.1 then
             fastTimeElapsed = fastTimeElapsed - 0.1
@@ -186,34 +226,7 @@ After(2, function()
         end
     end)
 
-    function eventFrame:SPELL_UPDATE_ICON(baseID)
-        local spellID = getSpellIDFromBaseID(baseID)
-        if not spellID then
-            return
-        end
-        updateIcon(spellID)
-    end
-
-    function eventFrame:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(spellID)
-        local validID = getValidSpellID(spellID)
-        if not validID then
-            return
-        end
-        updateOverlayed(validID)
-    end
-
-    function eventFrame:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(spellID)
-        local validID = getValidSpellID(spellID)
-        if not validID then
-            return
-        end
-        updateOverlayed(validID)
-    end
-
-    eventFrame:RegisterEvent("SPELL_UPDATE_ICON")
-    eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
-    eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
     eventFrame:SetScript("OnEvent", function(self, event, ...)
-        self[event](self, ...)
+        self[event](...)
     end)
 end)
