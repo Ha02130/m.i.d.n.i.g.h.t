@@ -25,7 +25,7 @@ local UNIT_ABSORB_AMOUNT_CHANGED = addonTable.Listeners.UNIT_ABSORB_AMOUNT_CHANG
 local UNIT_HEAL_ABSORB_AMOUNT_CHANGED = addonTable.Listeners.UNIT_HEAL_ABSORB_AMOUNT_CHANGED
 local UNIT_MAX_HEALTH_CHANGED = addonTable.Listeners.UNIT_MAX_HEALTH_CHANGED
 local PARTY_CHANGED = addonTable.Listeners.PARTY_CHANGED
-
+local OnUpdateHigh = addonTable.Listeners.OnUpdateHigh -- 高频刷新回调列表
 
 local function InitializePartyBar()
     for partyIndex = 1, 4 do
@@ -55,11 +55,12 @@ local function InitializePartyBar()
             updateHealAbsorbs()
         end
 
-        insert(UNIT_MAX_HEALTH_CHANGED, { unit = unitToken, func = updateMaxHealth })
-        insert(UNIT_ABSORB_AMOUNT_CHANGED, { unit = unitToken, func = updateDamageAbsorbs })
-        insert(UNIT_HEAL_ABSORB_AMOUNT_CHANGED, { unit = unitToken, func = updateHealAbsorbs })
-        insert(PARTY_CHANGED, updatePartyBar)
+        -- insert(UNIT_MAX_HEALTH_CHANGED, { unit = unitToken, func = updateMaxHealth })
+        -- insert(UNIT_ABSORB_AMOUNT_CHANGED, { unit = unitToken, func = updateDamageAbsorbs })
+        -- insert(UNIT_HEAL_ABSORB_AMOUNT_CHANGED, { unit = unitToken, func = updateHealAbsorbs })
+        -- insert(PARTY_CHANGED, updatePartyBar)
         updatePartyBar()
+        insert(OnUpdateHigh, updatePartyBar)
     end
 end
 
