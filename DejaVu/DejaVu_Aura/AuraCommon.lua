@@ -80,7 +80,6 @@ local function CreateAuraController(options)
 
     local cells = InitCells(maxAuraCount, baseX, baseY)
     local instanceIDMap = {}
-    local hasFullUpdateOnFrame = false
     local isEnemy = true
 
     local function getSpellTypeColor(instanceID)
@@ -191,10 +190,6 @@ local function CreateAuraController(options)
     end
 
     local function refreshAll()
-        if hasFullUpdateOnFrame then
-            return
-        end
-        hasFullUpdateOnFrame = true
         wipe(instanceIDMap)
         if colorMode == "unitHarmful" then
             if not UnitExists(unitKey) then -- 单位不存在时直接清空
@@ -251,9 +246,6 @@ local function CreateAuraController(options)
 
     return {
         addAura = addAura,
-        beginFrame = function()
-            hasFullUpdateOnFrame = false
-        end,
         refreshAll = refreshAll,
         removeAura = removeAura,
         updateRemaining = updateRemaining,

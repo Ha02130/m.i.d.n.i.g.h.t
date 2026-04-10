@@ -35,10 +35,6 @@ After(2, function()
     local lowTimeElapsed = -random()      -- 随机初始时间，避免所有事件在同一帧更新
     local superLowTimeElapsed = -random() -- 随机初始时间，避免所有事件在同一帧更新
     eventFrame:HookScript("OnUpdate", function(frame, elapsed)
-        if frame == nil then
-            return
-        end
-        controller.beginFrame()
         fastTimeElapsed = fastTimeElapsed + elapsed
         if fastTimeElapsed > 0.1 then
             fastTimeElapsed = fastTimeElapsed - 0.1
@@ -55,29 +51,29 @@ After(2, function()
         end
     end)
 
+
     function eventFrame:UNIT_AURA(unitToken, info)
-        if self == nil or unitToken ~= UNIT_KEY then
-            return
-        end
-        if info.isFullUpdate then
-            controller.refreshAll()
-            return
-        end
-        if info.removedAuraInstanceIDs then
-            for _, instanceID in ipairs(info.removedAuraInstanceIDs) do
-                controller.removeAura(instanceID)
-            end
-        end
-        if info.addedAuras then
-            for _, aura in ipairs(info.addedAuras) do
-                controller.addAura(aura.auraInstanceID)
-            end
-        end
-        if info.updatedAuraInstanceIDs then
-            for _, instanceID in ipairs(info.updatedAuraInstanceIDs) do
-                controller.updateRemaining(instanceID)
-            end
-        end
+        -- 因为无法判断isHarmful还是isHelpful，所以只能全量刷新。这个问题在12.0.5修正。等那时候补回来。
+        controller.refreshAll()
+        -- if info.isFullUpdate then
+        --     controller.refreshAll()
+        --     return
+        -- end
+        -- if info.removedAuraInstanceIDs then
+        --     for _, instanceID in ipairs(info.removedAuraInstanceIDs) do
+        --         controller.removeAura(instanceID)
+        --     end
+        -- end
+        -- if info.addedAuras then
+        --     for _, aura in ipairs(info.addedAuras) do
+        --         controller.addAura(aura.auraInstanceID)
+        --     end
+        -- end
+        -- if info.updatedAuraInstanceIDs then
+        --     for _, instanceID in ipairs(info.updatedAuraInstanceIDs) do
+        --         controller.updateRemaining(instanceID)
+        --     end
+        -- end
     end
 
     eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
