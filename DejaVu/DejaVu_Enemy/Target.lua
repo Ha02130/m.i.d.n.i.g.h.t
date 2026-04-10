@@ -207,7 +207,7 @@ After(2, function()                         -- 延迟加载
 
         cell.isAlive:setCellBoolean(UnitIsDeadOrGhost(UNIT_KEY), COLOR.BLACK, COLOR.STATUS_BOOLEAN.IS_ALIVE) -- 单位是否存活
         cell.isEnemy:setCellBoolean(UnitIsEnemy(UNIT_KEY, "player"), COLOR.STATUS_BOOLEAN.IS_ENEMY, COLOR.BLACK)
-        cell.canAttack:setCellBoolean(UnitCanAttack(UNIT_KEY, "player"), COLOR.STATUS_BOOLEAN.CAN_ATTACK, COLOR.BLACK)
+        cell.canAttack:setCellBoolean(UnitCanAttack("player", UNIT_KEY), COLOR.STATUS_BOOLEAN.CAN_ATTACK, COLOR.BLACK)
         cell.isInCombat:setCellBoolean(UnitAffectingCombat(UNIT_KEY), COLOR.STATUS_BOOLEAN.IS_IN_COMBAT, COLOR.BLACK)
         cell.isTarget:setCellBoolean(UnitIsUnit(UNIT_KEY, "target"), COLOR.STATUS_BOOLEAN.IS_TARGET, COLOR.BLACK)
     end
@@ -248,7 +248,7 @@ After(2, function()                         -- 延迟加载
         local spellInterruptibleColor = COLOR.SPELL_TYPE.ENEMY_SPELL_INTERRUPTIBLE
         local spellNotInterruptibleColor = COLOR.SPELL_TYPE.ENEMY_SPELL_NOT_INTERRUPTIBLE
 
-        if not UnitCanAttack(UNIT_KEY, "player") then
+        if not UnitCanAttack("player", UNIT_KEY) then
             spellInterruptibleColor = COLOR.SPELL_TYPE.PLAYER_SPELL
             spellNotInterruptibleColor = COLOR.SPELL_TYPE.PLAYER_SPELL
         end
