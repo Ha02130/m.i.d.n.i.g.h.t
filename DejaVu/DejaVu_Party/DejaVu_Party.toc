@@ -11,3 +11,4 @@
 libs\load_libs.xml
 
 AuraHelpful.lua
+AuraHarmful.lua
