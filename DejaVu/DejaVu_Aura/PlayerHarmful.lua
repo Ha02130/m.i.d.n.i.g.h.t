@@ -13,7 +13,8 @@ local MAX_AURA_COUNT = 10
 local BASE_X = 1
 local BASE_Y = 9
 local UNIT_KEY = "player"
-local AURA_FILTER = "HARMFUL"
+-- local AURA_FILTER = "HARMFUL"
+local AURA_FILTER = "HARMFUL|RAID"
 local SORT_RULE = Enum.UnitAuraSortRule.Default
 local SORT_DIRECTION = Enum.UnitAuraSortDirection.Normal
 
@@ -70,7 +71,7 @@ After(2, function()
         self[event](self, ...)
     end)
 
-    local fastTimeElapsed = -random()     -- 随机初始时间，避免所有事件在同一帧更新
+    local fastTimeElapsed = -random() -- 随机初始时间，避免所有事件在同一帧更新
     -- local lowTimeElapsed = -random()      -- 当前未使用，保留 0.5 秒刷新档位结构
     -- local superLowTimeElapsed = -random() -- 当前未使用，保留 2 秒刷新档位结构
     eventFrame:HookScript("OnUpdate", function(frame, elapsed)

@@ -6,6 +6,8 @@
 
 # 注意
 
-- 暂时只需要DejaVu一个目录
+<!-- - 暂时只需要DejaVu一个目录
 - 把`DejaVu`安装到`addons`目录下
-- `DejaVu_Core`和`DejaVu_*`是正在重构的更新版本，用来解决CPU占用过高的问题。
+- `DejaVu_Core`和`DejaVu_*`是正在重构的更新版本，用来解决CPU占用过高的问题。 -->
+
+- DejaVu.Outdated是旧版本

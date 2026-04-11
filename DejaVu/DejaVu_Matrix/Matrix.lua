@@ -11,7 +11,7 @@ addonTable.FontPath = "Interface\\Addons\\" .. addonName .. "\\PixNum.ttf"
 
 local SIZE = {}
 
-local scale = 4
+local scale = 1
 
 local function InitializeSize()              -- 初始化尺寸
     SIZE = {                                 -- 尺寸表主体
@@ -33,7 +33,7 @@ local function CreateMatrixFrame() -- 创建矩阵框架
     InitializeSize()
 
     local frame = CreateFrame("Frame", addonName .. "MartixFrame", UIParent)
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
+    frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
     frame:SetSize(SIZE.CELL * SIZE.MATRIX.Width, SIZE.CELL * SIZE.MATRIX.Height)
     frame:SetFrameStrata("TOOLTIP")
     frame:SetFrameLevel(900)

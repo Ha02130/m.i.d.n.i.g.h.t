@@ -20,14 +20,14 @@ local CharCell = DejaVu.CharCell
 After(2, function() -- 2 秒后执行，确保 DejaVu 核心已加载完成
     -- 左上和右下的标记点。
     -- 正式使用前先注释
-    -- Cell:New(0, 0, COLOR.MARK_POINT.NEAR_BLACK_1)
-    -- Cell:New(1, 1, COLOR.MARK_POINT.NEAR_BLACK_1)
-    -- Cell:New(0, 1, COLOR.MARK_POINT.NEAR_BLACK_2)
-    -- Cell:New(1, 0, COLOR.MARK_POINT.NEAR_BLACK_2)
-    -- Cell:New(82, 26, COLOR.MARK_POINT.NEAR_BLACK_1)
-    -- Cell:New(83, 27, COLOR.MARK_POINT.NEAR_BLACK_1)
-    -- Cell:New(82, 27, COLOR.MARK_POINT.NEAR_BLACK_2)
-    -- Cell:New(83, 26, COLOR.MARK_POINT.NEAR_BLACK_2)
+    Cell:New(0, 0, COLOR.MARK_POINT.NEAR_BLACK_1)
+    Cell:New(1, 1, COLOR.MARK_POINT.NEAR_BLACK_1)
+    Cell:New(0, 1, COLOR.MARK_POINT.NEAR_BLACK_2)
+    Cell:New(1, 0, COLOR.MARK_POINT.NEAR_BLACK_2)
+    Cell:New(82, 26, COLOR.MARK_POINT.NEAR_BLACK_1)
+    Cell:New(83, 27, COLOR.MARK_POINT.NEAR_BLACK_1)
+    Cell:New(82, 27, COLOR.MARK_POINT.NEAR_BLACK_2)
+    Cell:New(83, 26, COLOR.MARK_POINT.NEAR_BLACK_2)
 
     -- 左上的CharCell验证点，验证字体是否正确加载。
     CharCell:New(0, 2):setCell("*")
