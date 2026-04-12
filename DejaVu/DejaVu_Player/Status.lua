@@ -125,7 +125,7 @@ After(2, function()                                     -- 延迟加载
     -- 2 秒补正。
     local function updateAura()
         local bigDefenseTable = GetUnitAuraInstanceIDs("player", "HELPFUL|BIG_DEFENSIVE")
-        local dispellableDebuffTable = GetUnitAuraInstanceIDs(UNIT_KEY, "HARMFUL|RAID_PLAYER_DISPELLABLE") or {}
+        local dispellableDebuffTable = GetUnitAuraInstanceIDs("player", "HARMFUL|RAID_PLAYER_DISPELLABLE") or {}
         cell.hasBigDefense:setCellBoolean(#bigDefenseTable > 0, COLOR.STATUS_BOOLEAN.HAS_BIG_DEFENSE, COLOR.BLACK)
         cell.hasDispellableDebuff:setCellBoolean(#dispellableDebuffTable > 0, COLOR.STATUS_BOOLEAN.HAS_DISPELLABLE_DEBUFF, COLOR.BLACK)
     end
