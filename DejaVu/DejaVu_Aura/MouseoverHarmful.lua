@@ -17,7 +17,7 @@ local AURA_FILTER = "HARMFUL|PLAYER"
 local SORT_RULE = Enum.UnitAuraSortRule.Default
 local SORT_DIRECTION = Enum.UnitAuraSortDirection.Normal
 
-After(2, function()
+After(3, function()
     local controller = CreateAuraController({
         unitKey = UNIT_KEY,
         auraFilter = AURA_FILTER,
