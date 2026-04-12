@@ -183,8 +183,14 @@ class DruidGuardianEZ(DruidGuardian):
             elif target_need_interrupt:
                 return self.cast("target迎头痛击")
 
-        # 开怪阶段优先使用明月普照
-        # 玩家站定才用
+        # 毁灭
+        if ctx.spell_cooldown_ready("毁灭", spell_queue_window):
+            if rage > 50:
+                return self.cast("毁灭")
+
+        if (rage > 80) and ctx.spell_cooldown_ready("铁鬃", spell_queue_window, ignore_gcd=True):
+            return self.cast("泻怒铁鬃")
+
         if ctx.spell_cooldown_ready("明月普照", spell_queue_window) and (main_target is not None):
             if player_is_stand:
                 return self.cast(f"{main_target.unitToken}明月普照")
@@ -194,11 +200,6 @@ class DruidGuardianEZ(DruidGuardian):
             if enemy_in_range:
                 return self.cast("AOE痛击")
 
-        # 60怒才用毁灭
-        if ctx.spell_cooldown_ready("毁灭", spell_queue_window):
-            if rage > 60:
-                return self.cast("毁灭")
-
         # 裂伤。
         if ctx.spell_charges_ready("裂伤", 1, spell_queue_window):
             return self.cast("裂伤")
@@ -207,9 +208,6 @@ class DruidGuardianEZ(DruidGuardian):
         if ctx.spell_cooldown_ready("月火术", spell_queue_window) and (main_target is not None):
             if player.hasBuff("星河守护者"):
                 return self.cast(f"{main_target.unitToken}月火术")
-
-        if (rage > 100) and ctx.spell_cooldown_ready("铁鬃", spell_queue_window, ignore_gcd=True):
-            return self.cast("泻怒铁鬃")
 
         if ctx.spell_cooldown_ready("月火术", spell_queue_window) and (main_target is not None):
             if player.hasBuff("星河守护者"):
