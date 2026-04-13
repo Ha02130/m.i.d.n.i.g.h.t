@@ -9,8 +9,8 @@ __all__ = ["DruidRestoration",]
 
 # 全局变量。设置窗体不够，这些修改较少的，放在变量里。
 WILD_GROWTH_COUNT_THRESHOLD = 2  # 野性成长人数阈值
-TANK_HEALTH_SCORE_MULTIPLIER = 1.10
-HEALER_HEALTH_SCORE_MULTIPLIER = 0.95
+# TANK_HEALTH_SCORE_MULTIPLIER = 1.10
+# HEALER_HEALTH_SCORE_MULTIPLIER = 0.95
 
 
 class RestorationPartyMember(Unit):
@@ -38,9 +38,9 @@ class DruidRestoration(BaseRotation):
     def __init__(self) -> None:
         super().__init__()
 
-        self.tank_health_score_multiplier = TANK_HEALTH_SCORE_MULTIPLIER  # TANK 健康分数系数
-        self.tank_deficit_ignore_percent = 15  # 计算坦克的血量时，当坦克的血量缺口小于这个百分比时，认为坦克是满血的
-        self.healer_health_score_multiplier = HEALER_HEALTH_SCORE_MULTIPLIER  # HEALER 健康分数系数
+        # self.tank_health_score_multiplier = TANK_HEALTH_SCORE_MULTIPLIER  # TANK 健康分数系数
+        # self.tank_deficit_ignore_percent = 15  # 计算坦克的血量时，当坦克的血量缺口小于这个百分比时，认为坦克是满血的
+        # self.healer_health_score_multiplier = HEALER_HEALTH_SCORE_MULTIPLIER  # HEALER 健康分数系数
         self.ironbark_hp_threshold = 50  # 铁木树皮血量阈值
         self.barkskin_hp_threshold = 65  # 树皮术血量阈值
         self.convoke_party_hp_threshold = 65  # 万灵队血阈值
@@ -54,7 +54,7 @@ class DruidRestoration(BaseRotation):
         self.regrowth_hp_threshold = 85  # 愈合血量
         self.rejuvenation_hp_threshold = 99  # 回春血量
         self.abundance_stack_threshold = 5  # 丰饶层数阈值
-        self.hot_hp_threshold = 3.2  # 每个hot增加的血量阈值
+        self.hot_hp_threshold = 2.0  # 每个hot增加的血量阈值
         self.dispel_types = {"MAGIC", "CURSE", "POISON"}  # 可驱散的 debuff 类型
         self.dispel_blacklist: list[str] = []
 
@@ -132,26 +132,21 @@ class DruidRestoration(BaseRotation):
             # 血量基线使用“当前血量 - 治疗吸收”，数值越低说明越危险。
             health_base = health_percent - heal_absorbs
 
-            # 计算hot数量，并且每个hot，增加3点血量。
-            rejuvenation_count = 0
-            hot_count = 0
+            # 计算hot数量，并且每个hot，增加大约点血量。
+            rejuvenation_count = 0      # 回春数量，萌芽算回春（游戏机制）
+            hot_count = 0               # hot机制下的总层数，回春、萌芽、愈合、野性成长、生命绽放都算
             if rejuvenation_remaining > spell_queue_window:
                 rejuvenation_count += 1
                 hot_count += 1
-                health_base += self.hot_hp_threshold
             if germination_remaining > spell_queue_window:
                 rejuvenation_count += 1
                 hot_count += 1
-                health_base += self.hot_hp_threshold
             if regrowth_remaining > spell_queue_window:
                 hot_count += 1
-                health_base += self.hot_hp_threshold
             if wild_growth_remaining > spell_queue_window:
                 hot_count += 1
-                health_base += self.hot_hp_threshold
             if lifebloom_remaining > spell_queue_window:
                 hot_count += 1
-                health_base += self.hot_hp_threshold
 
             # 先找出单位身上可驱散的 debuff，再按黑名单过滤。
             dispel_list = [debuff.title for debuff in member.debuff if (debuff.type in self.dispel_types)]
@@ -162,31 +157,34 @@ class DruidRestoration(BaseRotation):
                     break
 
             # 记录完整 debuff 列表，方便调试和后续扩展判断。
-            debuff_list = [debuff.title for debuff in member.debuff if (debuff.title not in ["嗜血", "英勇"])]
+            debuff_list = [debuff.title for debuff in member.debuff if (debuff.title not in ["嗜血", "英勇", "赛季词缀", "良性Debuff"])]
             # print(f"{member.unitToken}的debuff列表: {debuff_list}")
 
             # 记录完整 buff 列表，方便调试和后续扩展判断。
             buff_list = [buff.title for buff in member.buff]
 
-            health_base = min(health_base-5*len(debuff_list), 100)
-            # health_base = max(health_base, 0)
-
             # 血量缺口表示补满到 100% 还需要多少治疗量。
             health_deficit = 100 - health_base
-            # 健康分数越低越优先，伤害吸收越多会让单位看起来更安全。
-            health_score = health_base + damage_absorbs
+            # 积分计算过程
+            # 积分是基于血量基线的，血量基线越低说明越危险，优先级越高。
+            # 积分是后续所有判断的标准。
+            health_score = health_base + damage_absorbs  # 基础健康分数，治疗吸收越多越安全
 
-            # 角色修正：可通过系数调高坦克优先级、调低治疗职业优先级。
+            # 角色修正
+            # 坦克的积分视为身上有3个hot。
+            # 治疗的积分视为身上少1个hot
             if unit_role == "TANK":
-                health_score *= self.tank_health_score_multiplier
+                health_score += 3 * self.hot_hp_threshold
             elif unit_role == "HEALER":
-                health_score *= self.healer_health_score_multiplier
+                health_score -= 1 * self.hot_hp_threshold
 
-            if unit_role == "TANK":
-                if health_deficit < self.tank_deficit_ignore_percent:
-                    health_deficit = 0
-                    health_base = 100
-                    health_score = (health_base + damage_absorbs) * self.tank_health_score_multiplier
+            # hot修正 （每个 HoT 提供的血量阈值乘以 HoT 数量，越多越安全）
+            health_score += hot_count * self.hot_hp_threshold
+            # debuff修正，每个debuff，积分-10分
+            health_score += len(debuff_list) * (-10)
+
+            # 积分最大100分
+            health_score = min(health_score, 100)
 
             member.rejuvenation_remaining = rejuvenation_remaining  # 回春术剩余时间
             member.germination_remaining = germination_remaining  # 萌芽剩余时间，等价于第二个回春
@@ -291,11 +289,11 @@ class DruidRestoration(BaseRotation):
             self.abundance_stack_threshold = int(round(restoration_abundance_stack_threshold_cell.mean)/20)
             # print(f"{self.abundance_stack_threshold=}", end="; ")
 
-        restoration_tank_deficit_ignore_percent_cell = ctx.setting.cell(12)
-        if restoration_tank_deficit_ignore_percent_cell is None:
-            self.tank_deficit_ignore_percent = 15
-        else:
-            self.tank_deficit_ignore_percent = float(restoration_tank_deficit_ignore_percent_cell.mean)
+        # restoration_tank_deficit_ignore_percent_cell = ctx.setting.cell(12)
+        # if restoration_tank_deficit_ignore_percent_cell is None:
+        #     self.tank_deficit_ignore_percent = 15
+        # else:
+        #     self.tank_deficit_ignore_percent = float(restoration_tank_deficit_ignore_percent_cell.mean)
             # print(f"{self.tank_deficit_ignore_percent=}", end="; ")
 
         restoration_hot_hp_threshold_cell = ctx.setting.cell(13)
@@ -358,15 +356,11 @@ class DruidRestoration(BaseRotation):
         if player.hasBuff("旅行形态"):
             return self.idle("旅行形态中")
 
-        if (not player.isInCombat) and (ctx.burst_time <= 0):  # 爆发模式则忽略战斗判断，直接开始预铺
-            return self.idle("未进入战斗")
-        # if not player.hasBuff("熊形态"):
-        #     return self.cast("any熊形态")
-
-        # 队伍平均血量基线，用于判断群体治疗技能是否值得交。
-        party_health_base_avg = sum(member.health_base for member in party_members) / len(party_members)
-        # 当前血量基线最低的单位，很多保命和单抬逻辑都以它为目标。
-        lowest_health_base_member = min(party_members, key=lambda member: member.health_base)
+        # 队伍平均健康分数。
+        health_score_avg = sum(member.health_score for member in party_members) / len(party_members)
+        # 当前最低健康分的目标
+        lowest_health_score_unit = min(party_members, key=lambda member: member.health_score)
+        lowest_health_score = lowest_health_score_unit.health_score
         # 丰饶层数供迅捷治愈逻辑使用。
         abundance_stack = player.buffStack("丰饶")
         # print(f"队伍平均治疗基线: {party_health_base_avg:.2f}, 最低血量的队员: {lowest_health_base_member.unitToken}({lowest_health_base_member.health_base:.2f}), 丰饶层数: {abundance_stack}")
@@ -382,27 +376,40 @@ class DruidRestoration(BaseRotation):
             tank_member = None
         # print(f"{tank_member.unitToken if tank_member else '没有坦克'}的血量基线: {tank_member.health_score if tank_member else 'N/A'}", end="; ")
 
+        # 1.2 共生关系逻辑（优先补坦克常驻 buff）
+        # 有坦克且共生关系可用时，检查坦克身上是否还没有共生关系。
+        # 如果满足条件，就给坦克补共生关系。
+        if (tank_member is not None) and ctx.spell_cooldown_ready("共生关系", spell_queue_window):
+            if not tank_member.hasBuff("共生关系"):
+                return self.cast(f"{tank_member.unitToken}共生关系")
+                # print(f"对{tank_member.unitToken}施放共生关系", end="; ")
+
+        if (not player.isInCombat) and (ctx.burst_time <= 0):  # 爆发模式则忽略战斗判断，直接开始预铺
+            return self.idle("未进入战斗")
+        # if not player.hasBuff("熊形态"):
+        #     return self.cast("any熊形态")
+
         # 0.1 铁木树皮逻辑（优先保最低血线目标）
-        # 铁木树皮冷却完成时，检查当前血量基线最低的队友是否低于铁木树皮阈值。
-        # 如果满足条件，就对这个最低血量基线目标施放铁木树皮。
+        # 铁木树皮冷却完成时，检查当前最低健康分的队友是否低于铁木树皮阈值。
+        # 如果满足条件，就对这个最低健康分目标施放铁木树皮。
         # 铁木树皮不对坦克释放。
-        # print(lowest_health_base_member.health_base)
+        # print(lowest_health_score_unit.health_score, end="; ")
         # print(1)
         if ctx.spell_cooldown_ready("铁木树皮", spell_queue_window, ignore_gcd=True):
             # print("铁木树皮冷却好了", end="; ")
-            # print(lowest_health_base_member.unitToken, end="; ")
-            # print(f"血量基线: {lowest_health_base_member.health_base}", end="; ")
-            if lowest_health_base_member.health_base < self.ironbark_hp_threshold:
-                return self.cast(f"{lowest_health_base_member.unitToken}铁木树皮")
-                # print(f"对{lowest_health_base_member.unitToken}施放铁木树皮", end="; ")
+            # print(lowest_health_score_unit.unitToken, end="; ")
+            # print(f"血量基线: {lowest_health_score_unit.health_score}", end="; ")
+            if lowest_health_score < self.ironbark_hp_threshold:
+                return self.cast(f"{lowest_health_score_unit.unitToken}铁木树皮")
+                # print(f"对{lowest_health_score_unit.unitToken}施放铁木树皮", end="; ")
 
         # 0.2 树皮术逻辑（自己保命）
-        # 树皮术冷却完成时，检查玩家自己的血量基线是否低于树皮术阈值。
+        # 树皮术冷却完成时，检查玩家自己的健康分是否低于树皮术阈值。
         # 如果满足条件，就对自己施放树皮术。
         if ctx.spell_cooldown_ready("树皮术", spell_queue_window, ignore_gcd=True):
             # print("树皮术冷却好了", end="; ")
             # print(f"血量基线: {player.health_base}", end="; ")
-            if player.health_base < self.barkskin_hp_threshold:
+            if player.health_score < self.barkskin_hp_threshold:
                 return self.cast("树皮术")
                 # print("对自己施放树皮术", end="; ")
 
@@ -423,61 +430,53 @@ class DruidRestoration(BaseRotation):
                 return self.cast(f"{tank_member.unitToken}生命绽放")
                 # print(f"对{tank_member.unitToken}施放生命绽放", end="; ")
 
-        # 1.2 共生关系逻辑（优先补坦克常驻 buff）
-        # 有坦克且共生关系可用时，检查坦克身上是否还没有共生关系。
-        # 如果满足条件，就给坦克补共生关系。
-        if (tank_member is not None) and ctx.spell_cooldown_ready("共生关系", spell_queue_window):
-            if not tank_member.hasBuff("共生关系"):
-                return self.cast(f"{tank_member.unitToken}共生关系")
-                # print(f"对{tank_member.unitToken}施放共生关系", end="; ")
-
         # 1.3 万灵之召逻辑（队血危险或单体濒危时开爆发）
-        # 万灵之召可用时，检查队伍平均血量基线是否低于队血阈值，或最低血量基线是否低于单体阈值。
+        # 万灵之召可用时，检查队伍平均健康分是否低于队血阈值，或最低健康分是否低于单体阈值。
         # 只要两种条件任意一种满足，就施放万灵之召。
         if ctx.spell_cooldown_ready("万灵之召", spell_queue_window):
-            if (party_health_base_avg <= self.convoke_party_hp_threshold):
+            if (health_score_avg <= self.convoke_party_hp_threshold):
                 return self.cast("万灵之召")
                 # print("施放万灵之召", end="; ")
 
-            if (lowest_health_base_member.health_base <= self.convoke_single_hp_threshold):
+            if (lowest_health_score <= self.convoke_single_hp_threshold):
                 return self.cast("万灵之召")
                 # print("施放万灵之召", end="; ")
 
         # 1.4 野性成长逻辑（满足人数后补群 HoT）
         # 玩家站定且野性成长可用时，统计血量基线低于野性成长阈值的人数是否达到设定人数。
         # 如果满足条件，就把野性成长打给当前血量基线最低的单位。
-        # wild_growth_targets = [member for member in party_members if member.health_base < self.wild_growth_hp_threshold]
+        # wild_growth_targets = [member for member in party_members if member.health_score < self.wild_growth_hp_threshold]
         # print(f"野性成长目标: {wild_growth_targets}")
         if ctx.spell_cooldown_ready("野性成长", spell_queue_window) and player_is_stand:
             # print("野性成长冷却好了", end="; ")
-            wild_growth_targets = [member for member in party_members if member.health_base < self.wild_growth_hp_threshold]
+            wild_growth_targets = [member for member in party_members if member.health_score < self.wild_growth_hp_threshold]
             # print(f"野性成长目标: {wild_growth_targets}")
             if len(wild_growth_targets) >= self.wild_growth_count_threshold:
-                return self.cast(f"{lowest_health_base_member.unitToken}野性成长")
-                # print(f"对{lowest_health_base_member.unitToken}施放野性成长", end="; ")
+                return self.cast(f"{lowest_health_score_unit.unitToken}野性成长")
+                # print(f"对{lowest_health_score_unit.unitToken}施放野性成长", end="; ")
 
         # 1.5 宁静逻辑（大掉血时补强力群疗）
         # 玩家站定且宁静可用时，检查队伍平均血量基线是否低于宁静阈值。
         # 如果满足条件，就直接施放宁静。
         if ctx.spell_cooldown_ready("宁静", spell_queue_window) and player_is_stand:
-            if party_health_base_avg <= self.tranquility_party_hp_threshold:
+            if health_score_avg <= self.tranquility_party_hp_threshold:
                 return self.cast("宁静")
                 # print("施放宁静", end="; ")
 
         # 1.6 自然迅捷逻辑（最低血线危险时预备瞬发）
-        # 自然迅捷可用时，检查当前血量基线最低的单位是否低于自然迅捷阈值。
+        # 自然迅捷可用时，检查当前最低健康分的单位是否低于自然迅捷阈值。
         # 如果满足条件，就先施放自然迅捷。
         # 针对非坦克玩家
         if ctx.spell_cooldown_ready("自然迅捷", spell_queue_window, ignore_gcd=True):
-            if lowest_health_base_member.health_base < self.nature_swiftness_hp_threshold:
+            if lowest_health_score < self.nature_swiftness_hp_threshold:
                 return self.cast("自然迅捷")
                 # print("施放自然迅捷", end="; ")
 
         # 1.7 迅捷治愈逻辑
-        # 统计迅捷治愈的人数：血量低于阈值，且身上有2层hot。
+        # 统计迅捷治愈的人数：健康分低于阈值，且身上有2层hot。
         # 如果满足人数条件，就施放迅捷治愈。
         if ctx.spell_charges_ready("迅捷治愈", 1, spell_queue_window):
-            swiftmend_targets = [member for member in party_members if (member.health_base < self.swiftmend_hp_threshold) and (member.hot_count > 1)]
+            swiftmend_targets = [member for member in party_members if (member.health_score < self.swiftmend_hp_threshold) and (member.hot_count > 1)]
             if (len(swiftmend_targets) >= self.swiftmend_count_threshold):
                 return self.cast("迅捷治愈")
                 # print("施放迅捷治愈", end="; ")
@@ -486,25 +485,25 @@ class DruidRestoration(BaseRotation):
         # 愈合可用时，检查最低血量基线目标是否低于愈合阈值，并且身上至少已有一个 HoT。
         # 如果满足条件，就对这个最低血量基线目标施放愈合。
         if ctx.spell_cooldown_ready("愈合", spell_queue_window) and player_is_stand:
-            if (lowest_health_base_member.health_base < self.regrowth_hp_threshold) and (lowest_health_base_member.hot_count > 1):
-                return self.cast(f"{lowest_health_base_member.unitToken}愈合")
-                # print(f"对{lowest_health_base_member.unitToken}施放愈合", end="; ")
+            if (lowest_health_score < self.regrowth_hp_threshold) and (lowest_health_base_member.hot_count > 1):
+                return self.cast(f"{lowest_health_score_unit.unitToken}愈合")
+                # print(f"对{lowest_health_score_unit.unitToken}施放愈合", end="; ")
 
         # 1.9 回春术逻辑（优先补 0 层回春）
-        # 回春术可用时，筛选回春数量为 0 且血量基线低于回春阈值的队友。
+        # 回春术可用时，筛选回春数量为 0 且健康分低于回春阈值的队友。
         # 在这些目标里，选择 health_score 最低的单位施放回春术。
         if ctx.spell_cooldown_ready("回春术", spell_queue_window):
-            rejuvenation_targets = [member for member in party_members if (member.rejuvenation_count == 0) and (member.health_base < self.rejuvenation_hp_threshold)]
+            rejuvenation_targets = [member for member in party_members if (member.rejuvenation_count == 0) and (member.health_score < self.rejuvenation_hp_threshold)]
             if rejuvenation_targets:
                 target = min(rejuvenation_targets, key=lambda member: member.health_score)
                 return self.cast(f"{target.unitToken}回春术")
                 # print(f"对{target.unitToken}施放回春术", end="; ")
 
         # 1.10 回春术逻辑（继续补到 2 层回春）
-        # 回春术可用时，筛选回春数量为 1 且血量基线低于回春阈值的队友。
+        # 回春术可用时，筛选回春数量为 1 且健康分低于回春阈值的队友。
         # 在这些目标里，选择 health_score 最低的单位继续补第二层回春。
         if ctx.spell_cooldown_ready("回春术", spell_queue_window):
-            rejuvenation_targets = [member for member in party_members if (member.rejuvenation_count == 1) and (member.health_base < self.rejuvenation_hp_threshold)]
+            rejuvenation_targets = [member for member in party_members if (member.rejuvenation_count == 1) and (member.health_score < self.rejuvenation_hp_threshold)]
             if rejuvenation_targets:
                 target = min(rejuvenation_targets, key=lambda member: member.health_score)
                 return self.cast(f"{target.unitToken}回春术")
@@ -540,7 +539,7 @@ class DruidRestoration(BaseRotation):
                 target = min(rejuvenation_targets, key=lambda member: member.health_score)
                 return self.cast(f"{target.unitToken}回春术")
 
-        # 3.0 保持瑞吉
+        # 3.0 保持丰饶
         # 3.1 如果丰饶层数小于阈值，给无回春目标释放回春
         # 一个玩家最多贡献2个丰饶，在阈值之上需要进一步限制。
         party_count = len(party_members)  # 队伍人数
@@ -575,6 +574,16 @@ class DruidRestoration(BaseRotation):
             if ctx.spell_cooldown_ready("复生", spell_queue_window) and player_is_stand:
                 return self.cast(f"mouseover复生")
 
+        # 针对所有健康分数大于99，但血量缺口大于10的目标
+        not_finished_targets = [member for member in party_members if (member.health_score > 99) and (member.health_deficit > 10)]
+        # 按血量缺口，从大到小排序，
+        not_finished_targets.sort(key=lambda member: member.health_deficit, reverse=True)
+        if len(not_finished_targets) > 0:
+            # print(f"健康分数大于99但血量缺口较大的目标: {[member.unitToken for member in not_finished_targets]}", end="; ")
+            if ctx.spell_cooldown_ready("愈合", spell_queue_window):
+                target = not_finished_targets[0]
+                return self.cast(f"{target.unitToken}愈合")
+                # print(f"对{target.unitToken}施放愈合", end="; ")
         # 4.0 战斗部分，在治疗之外的填充
 
         target = ctx.target
