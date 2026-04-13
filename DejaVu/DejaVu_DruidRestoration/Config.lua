@@ -355,34 +355,35 @@ end
 
 do
     -- x:67 y:12
+    -- 该数值没用了。
     -- 坦克缺口忽略  min:0 max:50 default:15 step:1
     -- 计算坦克的血量时，当坦克的血量缺口小于这个百分比时，认为坦克是满血的
-    local restoration_tank_deficit_ignore_percent = Config("restoration_tank_deficit_ignore_percent")
-    insert(ConfigRows, {
-        type = "slider",
-        key = "restoration_tank_deficit_ignore_percent",
-        name = "坦克缺口忽略",
-        tooltip = "计算坦克的血量时，当坦克的血量缺口小于这个百分比时，认为坦克是满血的",
-        min_value = 0,
-        max_value = 50,
-        step = 1,
-        default_value = 15,
-        bind_config = restoration_tank_deficit_ignore_percent,
-    })
+    -- local restoration_tank_deficit_ignore_percent = Config("restoration_tank_deficit_ignore_percent")
+    -- insert(ConfigRows, {
+    --     type = "slider",
+    --     key = "restoration_tank_deficit_ignore_percent",
+    --     name = "坦克缺口忽略",
+    --     tooltip = "计算坦克的血量时，当坦克的血量缺口小于这个百分比时，认为坦克是满血的",
+    --     min_value = 0,
+    --     max_value = 50,
+    --     step = 1,
+    --     default_value = 15,
+    --     bind_config = restoration_tank_deficit_ignore_percent,
+    -- })
 
-    After(2, function() -- 2 秒后执行，确保 DejaVu 核心已加载完成
-        local restoration_tank_deficit_ignore_percent_cell = Cell:New(67, 12)
-        local function set_restoration_tank_deficit_ignore_percent(value)
-            restoration_tank_deficit_ignore_percent_cell:setCellRGBA(value / 255)
-        end
-        set_restoration_tank_deficit_ignore_percent(restoration_tank_deficit_ignore_percent:get_value())
-        restoration_tank_deficit_ignore_percent:register_callback(set_restoration_tank_deficit_ignore_percent)
-    end)
+    -- After(2, function() -- 2 秒后执行，确保 DejaVu 核心已加载完成
+    --     local restoration_tank_deficit_ignore_percent_cell = Cell:New(67, 12)
+    --     local function set_restoration_tank_deficit_ignore_percent(value)
+    --         restoration_tank_deficit_ignore_percent_cell:setCellRGBA(value / 255)
+    --     end
+    --     set_restoration_tank_deficit_ignore_percent(restoration_tank_deficit_ignore_percent:get_value())
+    --     restoration_tank_deficit_ignore_percent:register_callback(set_restoration_tank_deficit_ignore_percent)
+    -- end)
 end
 
 do
     -- x:68 y:12
-    -- hot等效  min:0 max:6 default:3.2 step:0.2
+    -- hot等效  min:0 max:4 default:2 step:0.1
     -- 每个hot等效的生命值
     local restoration_hot_hp_threshold = Config("restoration_hot_hp_threshold")
     insert(ConfigRows, {
@@ -391,9 +392,9 @@ do
         name = "hot等效",
         tooltip = "每个hot等效的生命值",
         min_value = 0,
-        max_value = 5,
-        step = 0.2,
-        default_value = 3.2,
+        max_value = 4,
+        step = 0.1,
+        default_value = 2,
         bind_config = restoration_hot_hp_threshold,
     })
 
