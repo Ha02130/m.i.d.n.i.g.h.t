@@ -485,8 +485,11 @@ class DruidRestoration(BaseRotation):
         # 愈合可用时，检查最低血量基线目标是否低于愈合阈值，并且身上至少已有一个 HoT。
         # 如果满足条件，就对这个最低血量基线目标施放愈合。
         if ctx.spell_cooldown_ready("愈合", spell_queue_window) and player_is_stand:
-            if (lowest_health_score < self.regrowth_hp_threshold) and (lowest_health_score_unit.hot_count > 1):
-                return self.cast(f"{lowest_health_score_unit.unitToken}愈合")
+            if (lowest_health_score < self.regrowth_hp_threshold):
+                if (lowest_health_score_unit.hot_count > 1):
+                    return self.cast(f"{lowest_health_score_unit.unitToken}愈合")
+                else:
+                    return self.cast(f"{lowest_health_score_unit.unitToken}回春术")
                 # print(f"对{lowest_health_score_unit.unitToken}施放愈合", end="; ")
 
         # 1.9 回春术逻辑（优先补 0 层回春）
