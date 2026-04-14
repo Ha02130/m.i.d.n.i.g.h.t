@@ -25,14 +25,16 @@ After(2, function()
         local unitExists = false
         local damageAbsorbsBar = Bar:New(BASE_X - 20, 24, 10)
         local healAbsorbsBar = Bar:New(BASE_X - 20, 25, 10)
+        local inCominngHealsBar = Bar:New(BASE_X - 20, 24, 10, true)
 
         -- 更新当前队友吸收条的刻度范围。
         -- 基于 UNIT_MAXHEALTH 事件。
         -- 2 秒补正时会在 updateAll 里一起补正。
         local function updateMaxHealth()
             local maxHealth = UnitHealthMax(UNIT_KEY) or 0
-            damageAbsorbsBar:setMinMaxValues(0, maxHealth)
-            healAbsorbsBar:setMinMaxValues(0, maxHealth)
+            damageAbsorbsBar:setMinMaxValues(0, maxHealth / 2)
+            healAbsorbsBar:setMinMaxValues(0, maxHealth / 2)
+            inCominngHealsBar:setMinMaxValues(0, maxHealth / 2)
         end
 
         -- 更新当前队友的伤害吸收条数值。
@@ -83,6 +85,23 @@ After(2, function()
             updateHealAbsorbs()
         end
 
+        -- 即将收到的治疗更新时只刷新即将收到的治疗条。
+        -- 事件用途：处理 UNIT_HEAL_PREDICTION_CHANGED。
+        -- 2 秒补正：在 superLowTimeElapsed 档位里单独
+        -- 补正。
+
+        local function updateIncomingHeals()
+            inCominngHealsBar:setValue(UnitGetIncomingHeals(UNIT_KEY) or 0)
+        end
+
+        function eventFrame:UNIT_HEAL_PREDICTION(unitToken)
+            updateIncomingHeals()
+        end
+
+        eventFrame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", UNIT_KEY)
+
+
+
         local updateUnitExists = function()
             unitExists = UnitExists(UNIT_KEY)
         end
@@ -94,6 +113,7 @@ After(2, function()
             updateMaxHealth()
             updateDamageAbsorbs()
             updateHealAbsorbs()
+            updateIncomingHeals()
         end
 
         local GroupChangeOnFrame = false

@@ -33,14 +33,15 @@ Bar.currentValueIsSecret = nil
 ---@param x integer X坐标（以单元格为单位）
 ---@param y integer Y坐标（以单元格为单位）
 ---@param width number 宽度
----@return Bar|nil 返回Bar实例, 如果父框架不存在则返回nil
-function Bar:New(x, y, width)
-    if not addonTable.MartixFrame then
-        return nil
+---@return Bar|nil # 返回Bar实例, 如果父框架不存在则返回nil
+function Bar:New(x, y, width, reverse)
+    if reverse and (reverse == true) then
+        reverse = true
+    else
+        reverse = false
     end
-
     local instance = setmetatable({}, self)
-    instance:_initialize(x, y, width)
+    instance:_initialize(x, y, width, reverse)
     return instance
 end
 
@@ -49,7 +50,8 @@ end
 ---@param x integer X坐标
 ---@param y integer Y坐标
 ---@param width number 宽度
-function Bar:_initialize(x, y, width)
+---@param reverse boolean 是否反向填充
+function Bar:_initialize(x, y, width, reverse)
     local parent = addonTable.MartixFrame
     local BarSize = addonTable.SIZE.CELL
     local BarSlug = x .. "_" .. y
@@ -61,15 +63,18 @@ function Bar:_initialize(x, y, width)
     BarFrame:SetSize(width * BarSize, BarSize)
     BarFrame:Show()
 
-    local BarTexture = BarFrame:CreateTexture(nil, "BACKGROUND")
-    BarTexture:SetAllPoints(BarFrame)
-    BarTexture:SetColorTexture(0, 0, 0, 1)
+    -- local BarTexture = BarFrame:CreateTexture(nil, "BACKGROUND")
+    -- BarTexture:SetAllPoints(BarFrame)
+    -- BarTexture:SetColorTexture(1, 1, 1, 1)
 
     local StatusBar = CreateFrame("StatusBar", nil, BarFrame)
     StatusBar:SetAllPoints(BarFrame)
     StatusBar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
     StatusBar:SetStatusBarColor(1, 1, 1, 1)
-    self.Texture = BarTexture
+    if reverse then
+        StatusBar:SetReverseFill(true)
+    end
+    -- self.Texture = BarTexture
     self.Frame = BarFrame
     self.Slug = BarSlug
     self.X = x

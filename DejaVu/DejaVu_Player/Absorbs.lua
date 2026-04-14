@@ -20,6 +20,7 @@ After(2, function()
     local eventFrame = CreateFrame("Frame") -- 事件框架
     local damageAbsorbsBar = Bar:New(43, 16, 20)
     local healAbsorbsBar = Bar:New(64, 14, 20)
+    local inCominngHealsBar = Bar:New(43, 16, 20, true)
 
     -- 更新玩家两条吸收条的刻度范围。
     -- 基于 UNIT_MAXHEALTH 事件。
@@ -28,6 +29,7 @@ After(2, function()
         local maxHealth = UnitHealthMax("player") or 0
         damageAbsorbsBar:setMinMaxValues(0, maxHealth)
         healAbsorbsBar:setMinMaxValues(0, maxHealth)
+        inCominngHealsBar:setMinMaxValues(0, maxHealth)
     end
 
     -- 更新玩家的伤害吸收条数值。
@@ -52,6 +54,7 @@ After(2, function()
         updateDamageAbsorbs()
         updateHealAbsorbs()
     end
+
     eventFrame:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
 
     -- 伤害吸收变化时只刷新伤害吸收条。
@@ -60,6 +63,7 @@ After(2, function()
     function eventFrame:UNIT_ABSORB_AMOUNT_CHANGED(unitToken)
         updateDamageAbsorbs()
     end
+
     eventFrame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", "player")
 
     -- 治疗吸收变化时只刷新治疗吸收条。
@@ -68,7 +72,23 @@ After(2, function()
     function eventFrame:UNIT_HEAL_ABSORB_AMOUNT_CHANGED(unitToken)
         updateHealAbsorbs()
     end
+
     eventFrame:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", "player")
+
+    -- 即将收到的治疗更新时只刷新即将收到的治疗条。
+    -- 事件用途：处理 UNIT_HEAL_PREDICTION_CHANGED。
+    -- 2 秒补正：在 superLowTimeElapsed 档位里单独
+    -- 补正。
+
+    local function updateIncomingHeals()
+        inCominngHealsBar:setValue(UnitGetIncomingHeals("player") or 0)
+    end
+
+    function eventFrame:UNIT_HEAL_PREDICTION(unitToken)
+        updateIncomingHeals()
+    end
+
+    eventFrame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", "player")
 
     -- local fastTimeElapsed = -random()     -- 当前未使用，保留 0.1 秒刷新档位结构
     -- local lowTimeElapsed = -random()      -- 当前未使用，保留 0.5 秒刷新档位结构
@@ -88,6 +108,7 @@ After(2, function()
             updateMaxHealth()
             updateDamageAbsorbs()
             updateHealAbsorbs()
+            updateIncomingHeals()
         end
     end)
 
